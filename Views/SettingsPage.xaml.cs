@@ -2,7 +2,6 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI.ViewManagement;
 using System;
 using System.IO;
 using System.Threading;
@@ -13,19 +12,17 @@ namespace FluentGit.Views;
 
 public sealed partial class SettingsPage : Page
 {
-    private bool _isUpdating = false;
     private CancellationTokenSource? _infoBarCts;
 
+    // InfoBar 显示时间（毫秒）—— 3 秒
     private const int InfoBarDisplayMilliseconds = 3000;
 
+    // 预期 Git.exe 的 SHA-256 哈希值（小写）
     private const string ExpectedGitHash = "c470d205517c7a53ceca321df16a6e4549fcd52b576ab4d09536d36f26fda5a9";
 
     public SettingsPage()
     {
         InitializeComponent();
-        ThemeToggle.Toggled += OnThemeToggled;
-        FollowSystemCheckBox.Checked += OnFollowSystemChecked;
-        FollowSystemCheckBox.Unchecked += OnFollowSystemUnchecked;
         this.Loaded += OnLoaded;
     }
 
@@ -40,19 +37,7 @@ public sealed partial class SettingsPage : Page
         {
             var settings = SettingsService.Load();
 
-            if (!string.IsNullOrEmpty(settings.AppTheme))
-            {
-                bool isDark = settings.AppTheme == "Dark";
-                ThemeToggle.IsOn = isDark;
-                ApplyTheme(isDark);
-            }
-            else
-            {
-                bool systemIsDark = IsSystemDarkTheme();
-                ThemeToggle.IsOn = systemIsDark;
-                ApplyTheme(systemIsDark);
-            }
-
+            // Git 路径加载
             string? gitPath = settings.GitPath;
             if (string.IsNullOrEmpty(gitPath))
             {
@@ -89,57 +74,6 @@ public sealed partial class SettingsPage : Page
         {
             System.Diagnostics.Debug.WriteLine($"加载设置异常: {ex.Message}");
         }
-    }
-
-    private void ApplyTheme(bool isDark)
-    {
-        try
-        {
-            var frame = App.MainWindow?.RootFrame;
-            if (frame != null)
-                frame.RequestedTheme = isDark ? ElementTheme.Dark : ElementTheme.Light;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"应用主题异常: {ex.Message}");
-        }
-    }
-
-    private void OnThemeToggled(object sender, RoutedEventArgs e)
-    {
-        if (_isUpdating) return;
-        bool isDark = ThemeToggle.IsOn;
-        ApplyTheme(isDark);
-        var settings = SettingsService.Load();
-        settings.AppTheme = isDark ? "Dark" : "Light";
-        SettingsService.Save(settings);
-    }
-
-    private void OnFollowSystemChecked(object sender, RoutedEventArgs e)
-    {
-        if (_isUpdating) return;
-        bool systemIsDark = IsSystemDarkTheme();
-        _isUpdating = true;
-        ThemeToggle.IsOn = systemIsDark;
-        ApplyTheme(systemIsDark);
-        var settings = SettingsService.Load();
-        settings.AppTheme = systemIsDark ? "Dark" : "Light";
-        SettingsService.Save(settings);
-        _isUpdating = false;
-    }
-
-    private void OnFollowSystemUnchecked(object sender, RoutedEventArgs e) { }
-
-    private bool IsSystemDarkTheme()
-    {
-        try
-        {
-            var uiSettings = new UISettings();
-            var color = uiSettings.GetColorValue(UIColorType.Background);
-            double luminance = (0.299 * color.R + 0.587 * color.G + 0.114 * color.B) / 255;
-            return luminance < 0.5;
-        }
-        catch { return false; }
     }
 
     private void OnBrowseGitPath(object sender, RoutedEventArgs e)
@@ -231,6 +165,7 @@ public sealed partial class SettingsPage : Page
         SelectedPathDisplay.Text = string.IsNullOrEmpty(path) ? "当前选中路径：无" : $"当前选中路径：{path}";
     }
 
+    // InfoBar 显示方法（动画 + 3秒自动消失）
     private async void ShowInfoBar(string title, string message, InfoBarSeverity severity)
     {
         _infoBarCts?.Cancel();
@@ -244,6 +179,7 @@ public sealed partial class SettingsPage : Page
         StatusInfoBar.Message = message;
         StatusInfoBar.Severity = severity;
 
+        // 复位到初始状态（透明、左侧外）
         InfoBarTransform.X = -400;
         InfoBarContainer.Opacity = 0;
 

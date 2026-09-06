@@ -5,6 +5,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
     <Page.Resources>
+        <!-- 滑入动画：同时改变透明度 (0→1) 和位置 (-400→0) -->
         <Storyboard x:Name="SlideInStoryboard">
             <DoubleAnimation
                 Storyboard.TargetName="InfoBarContainer"
@@ -27,6 +28,7 @@
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
         </Storyboard>
+        <!-- 滑出动画：同时改变透明度 (1→0) 和位置 (0→-400) -->
         <Storyboard x:Name="SlideOutStoryboard">
             <DoubleAnimation
                 Storyboard.TargetName="InfoBarContainer"
@@ -54,27 +56,37 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="主题" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
-        <ToggleSwitch x:Name="ThemeToggle" Grid.Row="1" Header="手动切换主题" OnContent="暗色" OffContent="亮色" Toggled="OnThemeToggled" Margin="0,0,0,20"/>
-        <CheckBox x:Name="FollowSystemCheckBox" Grid.Row="2" Content="跟随系统主题" Checked="OnFollowSystemChecked" Unchecked="OnFollowSystemUnchecked" Margin="0,0,0,30"/>
-
-        <StackPanel Grid.Row="3" HorizontalAlignment="Left">
+        <!-- Git 路径设置（唯一内容） -->
+        <StackPanel Grid.Row="0" HorizontalAlignment="Left">
             <TextBlock Text="Git 安装路径" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
-            <TextBlock x:Name="SelectedPathDisplay" Text="当前选中路径：无" FontSize="14" Foreground="Gray" Margin="0,0,0,5"/>
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,10" Width="300" HorizontalAlignment="Left">
-                <TextBox x:Name="GitPathTextBox" PlaceholderText="例如: C:\Program Files\Git\bin\git.exe" TextWrapping="NoWrap" />
+            
+            <TextBlock x:Name="SelectedPathDisplay" 
+                       Text="当前选中路径：无" 
+                       FontSize="14" 
+                       Foreground="Gray" 
+                       Margin="0,0,0,5"/>
+
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" 
+                          Margin="0,0,0,10" Width="300" HorizontalAlignment="Left">
+                <TextBox x:Name="GitPathTextBox" 
+                         PlaceholderText="例如: C:\Program Files\Git\bin\git.exe"
+                         TextWrapping="NoWrap" />
             </ScrollViewer>
+
             <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Left">
                 <Button Content="浏览..." Click="OnBrowseGitPath" />
                 <Button Content="自动查找" Click="OnAutoFindGitPath" />
                 <Button Content="保存" Click="OnSaveGitPath" />
             </StackPanel>
 
-            <Border x:Name="InfoBarContainer" Margin="0,10,0,0" HorizontalAlignment="Left" MinWidth="300" Opacity="0">
+            <!-- InfoBar 容器 -->
+            <Border x:Name="InfoBarContainer" 
+                    Margin="0,10,0,0" 
+                    HorizontalAlignment="Left" 
+                    MinWidth="300"
+                    Opacity="0">
                 <Border.RenderTransform>
                     <TranslateTransform x:Name="InfoBarTransform" X="-400" />
                 </Border.RenderTransform>
