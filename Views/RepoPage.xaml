@@ -5,7 +5,6 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
     <Grid>
-        <!-- 主内容居中 -->
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="15">
             <!-- 正常显示的标题 -->
             <TextBlock x:Name="MainContent" Text="仓库管理页面" FontSize="24" 
@@ -20,6 +19,25 @@
                 <HyperlinkButton Content="下载 Git for Windows" 
                                  NavigateUri="https://git-scm.com/install/windows" 
                                  HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- 仓库操作区域 -->
+            <StackPanel x:Name="RepoActionsPanel" Visibility="Visible" Spacing="10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="RepoPathTextBox" Grid.Column="0" 
+                             PlaceholderText="选择或输入要初始化的目录路径" 
+                             Margin="0,0,10,0" MinWidth="300" />
+                    <Button Grid.Column="1" Content="浏览..." Click="OnBrowseForInit" />
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                    <Button x:Name="InitRepoButton" Content="初始化仓库" Click="OnInitRepository" />
+                    <Button x:Name="OpenRepoButton" Content="打开仓库" Click="OnOpenRepo" />
+                </StackPanel>
+                <TextBlock x:Name="RepoStatusText" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" />
             </StackPanel>
         </StackPanel>
     </Grid>
