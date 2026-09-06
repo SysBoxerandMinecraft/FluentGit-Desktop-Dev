@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FluentGit (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "FluentGit (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
