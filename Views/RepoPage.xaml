@@ -4,41 +4,105 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
+    <Page.Resources>
+        <!-- InfoBar 动画略（保持与之前一致） -->
+        <Storyboard x:Name="SlideInStoryboard">
+            <DoubleAnimation Storyboard.TargetName="InfoBarTransform" Storyboard.TargetProperty="Y"
+                             From="-100" To="0" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="InfoBarContainer" Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+        <Storyboard x:Name="SlideOutStoryboard">
+            <DoubleAnimation Storyboard.TargetName="InfoBarTransform" Storyboard.TargetProperty="Y"
+                             From="0" To="-100" Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseIn"/></DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="InfoBarContainer" Storyboard.TargetProperty="Opacity"
+                             From="1" To="0" Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseIn"/></DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+    </Page.Resources>
     <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="15">
-            <!-- 正常显示的标题 -->
-            <TextBlock x:Name="MainContent" Text="仓库管理页面" FontSize="24" 
-                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-            
-            <!-- Git 警告面板（默认隐藏） -->
-            <StackPanel x:Name="GitWarningPanel" Visibility="Collapsed" Spacing="10">
-                <TextBlock Text="未检测到 Git，请先安装 Git" 
-                           FontSize="16" 
-                           Foreground="Red" 
-                           HorizontalAlignment="Center" />
-                <HyperlinkButton Content="下载 Git for Windows" 
-                                 NavigateUri="https://git-scm.com/install/windows" 
-                                 HorizontalAlignment="Center" />
-            </StackPanel>
+        <!-- InfoBar 容器 -->
+        <Border x:Name="InfoBarContainer" VerticalAlignment="Top" HorizontalAlignment="Center"
+                Margin="20,20,20,0" MinWidth="400" Opacity="0">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="InfoBarTransform" Y="-100"/>
+            </Border.RenderTransform>
+            <InfoBar x:Name="StatusInfoBar" IsOpen="True" IsClosable="False" Severity="Success" Title="" Message=""/>
+        </Border>
 
-            <!-- 仓库操作区域 -->
-            <StackPanel x:Name="RepoActionsPanel" Visibility="Visible" Spacing="10">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox x:Name="RepoPathTextBox" Grid.Column="0" 
-                             PlaceholderText="选择或输入要初始化的目录路径" 
-                             Margin="0,0,10,0" MinWidth="300" />
-                    <Button Grid.Column="1" Content="浏览..." Click="OnBrowseForInit" />
-                </Grid>
-                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                    <Button x:Name="InitRepoButton" Content="初始化仓库" Click="OnInitRepository" />
-                    <Button x:Name="OpenRepoButton" Content="打开仓库" Click="OnOpenRepo" />
+        <!-- 主内容：左对齐，自适应宽度，最小宽度 400 -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,30,30,30" Width="Auto" MinWidth="400">
+                <!-- 仓库名 -->
+                <TextBlock x:Name="RepoNameDisplay" FontSize="24" FontWeight="SemiBold"
+                           Visibility="Collapsed" Margin="0,0,0,15" />
+
+                <!-- Git 警告 -->
+                <StackPanel x:Name="GitWarningPanel" Visibility="Collapsed" Spacing="10" Margin="0,0,0,15">
+                    <TextBlock Text="未检测到 Git，请先安装 Git" FontSize="16" Foreground="Red" />
+                    <HyperlinkButton Content="下载 Git for Windows" NavigateUri="https://git-scm.com/install/windows" />
                 </StackPanel>
-                <TextBlock x:Name="RepoStatusText" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" />
+
+                <!-- 操作面板 -->
+                <StackPanel x:Name="RepoActionsPanel" Visibility="Visible" Spacing="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="RepoPathTextBox" Grid.Column="0" PlaceholderText="选择或输入要初始化的目录路径" MinHeight="32" Margin="0,0,10,0" />
+                        <Button Grid.Column="1" Content="浏览..." Click="OnBrowseForInit" MinHeight="32" />
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="InitRepoButton" Content="初始化仓库" Click="OnInitRepository" MinHeight="32" />
+                        <Button x:Name="OpenRepoButton" Content="打开仓库" Click="OnOpenRepo" MinHeight="32" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- 克隆面板 -->
+                <Border x:Name="ClonePanel" BorderBrush="Gray" BorderThickness="0,1,0,0" Padding="0,10,0,0" Margin="0,15,0,0" Visibility="Collapsed">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="克隆远程仓库" FontWeight="SemiBold" FontSize="16" />
+                        <TextBox x:Name="CloneUrlTextBox" PlaceholderText="例如: https://github.com/用户名/仓库.git" MinHeight="32" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="CloneTargetTextBox" Grid.Column="0" PlaceholderText="目标目录" MinHeight="32" Margin="0,0,10,0" IsEnabled="False" />
+                            <Button Grid.Column="1" Content="浏览..." Click="OnBrowseCloneTarget" IsEnabled="False" MinHeight="32" />
+                        </Grid>
+                        <TextBlock x:Name="CloneTargetHint" Text="将克隆到当前仓库目录（会删除 .git）" FontSize="12" Foreground="Gray" />
+                        <Button x:Name="CloneButton" Content="克隆" Click="OnCloneRepository" HorizontalAlignment="Left" MinHeight="32" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 状态面板 -->
+                <StackPanel x:Name="StatusPanel" Visibility="Collapsed" Spacing="5" Margin="0,15,0,0">
+                    <TextBlock Text="当前分支：" FontWeight="SemiBold" />
+                    <TextBlock x:Name="BranchNameText" Text="" FontSize="14" />
+                    <TextBlock Text="文件状态：" FontWeight="SemiBold" Margin="0,10,0,5" />
+                    <ListView x:Name="StatusListView" MaxHeight="200" MinWidth="300" MinHeight="100">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="{Binding X}" FontFamily="Consolas" />
+                                    <TextBlock Text="{Binding Y}" FontFamily="Consolas" />
+                                    <TextBlock Text="{Binding Path}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <Button Content="刷新状态" Click="OnRefreshStatus" HorizontalAlignment="Left" MinHeight="32" />
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

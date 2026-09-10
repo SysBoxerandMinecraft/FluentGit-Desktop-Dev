@@ -7,10 +7,12 @@ namespace FluentGit.Services
 {
     public static class GitPathHelper
     {
+        // ★★★ 添加这一行 ★★★
+        public const string ExpectedGitHash = "c470d205517c7a53ceca321df16a6e4549fcd52b576ab4d09536d36f26fda5a9";
+
         /// <summary>
         /// 自动查找 Git 的安装路径
         /// </summary>
-        /// <returns>如果找到则返回 git.exe 的完整路径，否则返回 null</returns>
         public static string? FindGitPath()
         {
             // 1. 从常见的注册表位置查找
@@ -129,11 +131,8 @@ namespace FluentGit.Services
             return null;
         }
 
-        // ========== 新增：哈希相关方法 ==========
+        // ========== 哈希相关方法 ==========
 
-        /// <summary>
-        /// 计算文件的 SHA-256 哈希值（十六进制小写字符串）
-        /// </summary>
         public static string? ComputeFileHash(string filePath)
         {
             if (!File.Exists(filePath))
@@ -151,15 +150,12 @@ namespace FluentGit.Services
             }
         }
 
-        /// <summary>
-        /// 验证路径存在且哈希值匹配
-        /// </summary>
         public static bool ValidateGitPath(string gitPath, string? expectedHash)
         {
             if (!File.Exists(gitPath))
                 return false;
             if (string.IsNullOrEmpty(expectedHash))
-                return true; // 没有预期哈希，只校验存在性
+                return true;
             var actualHash = ComputeFileHash(gitPath);
             return !string.IsNullOrEmpty(actualHash) &&
                    actualHash.Equals(expectedHash, StringComparison.OrdinalIgnoreCase);
