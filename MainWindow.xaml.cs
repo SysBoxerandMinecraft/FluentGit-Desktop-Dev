@@ -1,9 +1,10 @@
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
+using System;
 using System.IO;
 using System.Reflection;
-using FluentGit.Views; 
+using FluentGit.Views;
 
 namespace FluentGit;
 
@@ -13,17 +14,47 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // 直接设置标题栏扩展（标准做法，确保性能稳定）
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
+        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
-        // 设置窗口图标（任务栏、Alt+Tab）
         string appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
         string iconPath = Path.Combine(appDir, "Assets", "AppIcon.ico");
         AppWindow.SetIcon(iconPath);
 
-        // 主题和导航
-        RootFrame.RequestedTheme = ElementTheme.Default;
-        RootFrame.Navigate(typeof(MainPage));
+        NavFrame.RequestedTheme = ElementTheme.Default;
+        NavFrame.Navigate(typeof(RepoPage));
+    }
+
+    private void TitleBar_PaneToggleRequested(TitleBar sender, object args)
+    {
+        NavView.IsPaneOpen = !NavView.IsPaneOpen;
+    }
+
+    private void TitleBar_BackRequested(TitleBar sender, object args)
+    {
+        if (NavFrame.CanGoBack)
+            NavFrame.GoBack();
+    }
+
+    private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    {
+        if (args.SelectedItem is NavigationViewItem item)
+        {
+            switch (item.Tag)
+            {
+                case "repo":
+                    NavFrame.Navigate(typeof(RepoPage));
+                    break;
+                case "admin":
+                    NavFrame.Navigate(typeof(AdminPage));
+                    break;
+                case "settings":
+                    NavFrame.Navigate(typeof(SettingsPage));
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown navigation item tag: {item.Tag}");
+            }
+        }
     }
 }

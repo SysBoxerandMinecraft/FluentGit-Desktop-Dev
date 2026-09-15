@@ -24,7 +24,7 @@ public sealed partial class PlaceholderPage : Page
             TitleText.Text = title;
 
         _isUpdating = true;
-        var frame = App.MainWindow?.RootFrame;
+        var frame = this.Frame;   // ★ 改这里
         if (frame != null)
         {
             ThemeToggle.IsOn = (frame.RequestedTheme == ElementTheme.Dark);
@@ -36,7 +36,7 @@ public sealed partial class PlaceholderPage : Page
     private void OnThemeToggled(object sender, RoutedEventArgs e)
     {
         if (_isUpdating) return;
-        var frame = App.MainWindow?.RootFrame;
+        var frame = this.Frame;   // ★ 改这里
         if (frame == null) return;
 
         var newTheme = ThemeToggle.IsOn ? ElementTheme.Dark : ElementTheme.Light;
@@ -47,7 +47,7 @@ public sealed partial class PlaceholderPage : Page
     private void OnFollowSystemChecked(object sender, RoutedEventArgs e)
     {
         if (_isUpdating) return;
-        var frame = App.MainWindow?.RootFrame;
+        var frame = this.Frame;   // ★ 改这里
         if (frame == null) return;
 
         bool systemIsDark = IsSystemDarkTheme();
@@ -61,10 +61,7 @@ public sealed partial class PlaceholderPage : Page
         }
     }
 
-    private void OnFollowSystemUnchecked(object sender, RoutedEventArgs e)
-    {
-        // 不操作
-    }
+    private void OnFollowSystemUnchecked(object sender, RoutedEventArgs e) { }
 
     private bool IsSystemDarkTheme()
     {

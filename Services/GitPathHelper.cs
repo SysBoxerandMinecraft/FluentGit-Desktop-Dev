@@ -7,38 +7,48 @@ namespace FluentGit.Services
 {
     public static class GitPathHelper
     {
-        // ★★★ 添加这一行 ★★★
+        private const string TAG = "GitPathHelper";
         public const string ExpectedGitHash = "c470d205517c7a53ceca321df16a6e4549fcd52b576ab4d09536d36f26fda5a9";
 
-        /// <summary>
-        /// 自动查找 Git 的安装路径
-        /// </summary>
         public static string? FindGitPath()
         {
-            // 1. 从常见的注册表位置查找
-            string? installPath = FindGitFromRegistry();
-            if (!string.IsNullOrEmpty(installPath))
+            try
             {
-                return installPath;
-            }
-
-            // 2. 检查默认安装位置
-            string[] defaultPaths = new string[]
-            {
-                @"C:\Program Files\Git\bin\git.exe",
-                @"C:\Program Files (x86)\Git\bin\git.exe"
-            };
-
-            foreach (var path in defaultPaths)
-            {
-                if (File.Exists(path))
+                string? installPath = FindGitFromRegistry();
+                if (!string.IsNullOrEmpty(installPath))
                 {
-                    return path;
+                    AppLogger.OK(TAG, $"从注册表找到 Git: {installPath}");
+                    return installPath;
                 }
-            }
 
-            // 3. 从 PATH 环境变量中查找
-            return FindGitInPath();
+                string[] defaultPaths = new string[]
+                {
+                    @"C:\Program Files\Git\bin\git.exe",
+                    @"C:\Program Files (x86)\Git\bin\git.exe"
+                };
+
+                foreach (var path in defaultPaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        AppLogger.OK(TAG, $"从默认路径找到 Git: {path}");
+                        return path;
+                    }
+                }
+
+                var fromPath = FindGitInPath();
+                if (!string.IsNullOrEmpty(fromPath))
+                    AppLogger.OK(TAG, $"从 PATH 找到 Git: {fromPath}");
+                else
+                    AppLogger.Warning(TAG, "未找到 Git");
+
+                return fromPath;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(TAG, $"FindGitPath 异常: {ex.Message}");
+                return null;
+            }
         }
 
         private static string? FindGitFromRegistry()
@@ -51,8 +61,7 @@ namespace FluentGit.Services
             };
 
             string? path = TryGetRegistryValue(RegistryView.Registry64, registryPaths);
-            if (!string.IsNullOrEmpty(path))
-                return path;
+            if (!string.IsNullOrEmpty(path)) return path;
 
             path = TryGetRegistryValue(RegistryView.Registry32, registryPaths);
             return path;
@@ -88,17 +97,14 @@ namespace FluentGit.Services
 
         private static string? NormalizeGitPath(string path)
         {
-            if (string.IsNullOrEmpty(path))
-                return null;
+            if (string.IsNullOrEmpty(path)) return null;
 
             if (Directory.Exists(path))
             {
                 string fullPath = Path.Combine(path, "bin", "git.exe");
-                if (File.Exists(fullPath))
-                    return fullPath;
+                if (File.Exists(fullPath)) return fullPath;
                 fullPath = Path.Combine(path, "git.exe");
-                if (File.Exists(fullPath))
-                    return fullPath;
+                if (File.Exists(fullPath)) return fullPath;
             }
 
             if (File.Exists(path) && Path.GetFileName(path).Equals("git.exe", StringComparison.OrdinalIgnoreCase))
@@ -112,8 +118,7 @@ namespace FluentGit.Services
             try
             {
                 var pathEnv = Environment.GetEnvironmentVariable("PATH");
-                if (string.IsNullOrEmpty(pathEnv))
-                    return null;
+                if (string.IsNullOrEmpty(pathEnv)) return null;
 
                 var paths = pathEnv.Split(Path.PathSeparator);
                 foreach (var dir in paths)
@@ -121,8 +126,7 @@ namespace FluentGit.Services
                     try
                     {
                         string gitPath = Path.Combine(dir, "git.exe");
-                        if (File.Exists(gitPath))
-                            return gitPath;
+                        if (File.Exists(gitPath)) return gitPath;
                     }
                     catch { }
                 }
@@ -131,12 +135,9 @@ namespace FluentGit.Services
             return null;
         }
 
-        // ========== 哈希相关方法 ==========
-
         public static string? ComputeFileHash(string filePath)
         {
-            if (!File.Exists(filePath))
-                return null;
+            if (!File.Exists(filePath)) return null;
             try
             {
                 using var sha256 = SHA256.Create();
@@ -152,10 +153,8 @@ namespace FluentGit.Services
 
         public static bool ValidateGitPath(string gitPath, string? expectedHash)
         {
-            if (!File.Exists(gitPath))
-                return false;
-            if (string.IsNullOrEmpty(expectedHash))
-                return true;
+            if (!File.Exists(gitPath)) return false;
+            if (string.IsNullOrEmpty(expectedHash)) return true;
             var actualHash = ComputeFileHash(gitPath);
             return !string.IsNullOrEmpty(actualHash) &&
                    actualHash.Equals(expectedHash, StringComparison.OrdinalIgnoreCase);

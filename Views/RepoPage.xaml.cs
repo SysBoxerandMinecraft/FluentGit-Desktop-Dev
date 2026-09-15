@@ -5,16 +5,15 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using FluentGit.Services;
 
 namespace FluentGit.Views;
 
 public sealed partial class RepoPage : Page
 {
+    private const string TAG = "RepoPage";
     private CancellationTokenSource? _infoBarCts;
     private bool _isInfoBarAnimating = false;
-    private string? _currentRepoPath;
 
     public RepoPage()
     {
@@ -25,76 +24,97 @@ public sealed partial class RepoPage : Page
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         CheckGitAvailability();
+
+        var saved = AppState.CurrentRepoPath;
+        if (!string.IsNullOrEmpty(saved) && Directory.Exists(saved))
+        {
+            RepoActionsPanel.Visibility = Visibility.Collapsed;
+            RepoNameDisplay.Text = Path.GetFileName(saved);
+            RepoNameDisplay.Visibility = Visibility.Visible;
+        }
         UpdateCloneUI();
     }
 
     private void CheckGitAvailability()
     {
-        var settings = SettingsService.Load();
-        string? gitPath = settings.GitPath;
-
-        if (string.IsNullOrEmpty(gitPath))
+        try
         {
-            gitPath = GitPathHelper.FindGitPath();
+            var settings = SettingsService.Load();
+            string? gitPath = settings.GitPath;
+
+            if (string.IsNullOrEmpty(gitPath))
+            {
+                gitPath = GitPathHelper.FindGitPath();
+                if (!string.IsNullOrEmpty(gitPath) && GitPathHelper.ValidateGitPath(gitPath, GitPathHelper.ExpectedGitHash))
+                {
+                    settings.GitPath = gitPath;
+                    settings.GitHash = GitPathHelper.ComputeFileHash(gitPath);
+                    SettingsService.Save(settings);
+                    AppLogger.OK(TAG, $"自动找到 Git: {gitPath}");
+                }
+                else
+                {
+                    gitPath = null;
+                }
+            }
+
+            bool gitFound = false;
             if (!string.IsNullOrEmpty(gitPath) && GitPathHelper.ValidateGitPath(gitPath, GitPathHelper.ExpectedGitHash))
             {
-                settings.GitPath = gitPath;
-                settings.GitHash = GitPathHelper.ComputeFileHash(gitPath);
-                SettingsService.Save(settings);
+                try
+                {
+                    var process = new System.Diagnostics.Process();
+                    process.StartInfo.FileName = gitPath;
+                    process.StartInfo.Arguments = "--version";
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    string output = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit();
+                    if (process.ExitCode == 0 && output.Contains("git version"))
+                        gitFound = true;
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Error(TAG, $"git --version 异常: {ex.Message}");
+                }
+            }
+
+            if (!gitFound)
+            {
+                AppLogger.Warning(TAG, "未找到 Git");
+                GitWarningPanel.Visibility = Visibility.Visible;
+                RepoActionsPanel.Visibility = Visibility.Collapsed;
+                ClonePanel.Visibility = Visibility.Collapsed;
             }
             else
             {
-                gitPath = null;
+                GitWarningPanel.Visibility = Visibility.Collapsed;
+                RepoActionsPanel.Visibility = Visibility.Visible;
             }
         }
-
-        bool gitFound = false;
-        if (!string.IsNullOrEmpty(gitPath) && GitPathHelper.ValidateGitPath(gitPath, GitPathHelper.ExpectedGitHash))
+        catch (Exception ex)
         {
-            try
-            {
-                var process = new System.Diagnostics.Process();
-                process.StartInfo.FileName = gitPath;
-                process.StartInfo.Arguments = "--version";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.CreateNoWindow = true;
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-                if (process.ExitCode == 0 && output.Contains("git version"))
-                {
-                    gitFound = true;
-                }
-            }
-            catch { }
-        }
-
-        if (!gitFound)
-        {
-            GitWarningPanel.Visibility = Visibility.Visible;
-            RepoActionsPanel.Visibility = Visibility.Collapsed;
-            ClonePanel.Visibility = Visibility.Collapsed;
-            StatusPanel.Visibility = Visibility.Collapsed;
-        }
-        else
-        {
-            GitWarningPanel.Visibility = Visibility.Collapsed;
-            RepoActionsPanel.Visibility = Visibility.Visible;
+            AppLogger.Error(TAG, $"CheckGitAvailability 异常: {ex.Message}");
         }
     }
 
     private void OnBrowseForInit(object sender, RoutedEventArgs e)
     {
-        var folderPicker = new Windows.Storage.Pickers.FolderPicker();
-        folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.ComputerFolder;
-        folderPicker.FileTypeFilter.Add("*");
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
-        WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, hwnd);
-        var folder = folderPicker.PickSingleFolderAsync().GetAwaiter().GetResult();
-        if (folder != null)
+        try
         {
-            RepoPathTextBox.Text = folder.Path;
+            var folderPicker = new Windows.Storage.Pickers.FolderPicker();
+            folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.ComputerFolder;
+            folderPicker.FileTypeFilter.Add("*");
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, hwnd);
+            var folder = folderPicker.PickSingleFolderAsync().GetAwaiter().GetResult();
+            if (folder != null) RepoPathTextBox.Text = folder.Path;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(TAG, $"浏览目录异常: {ex.Message}");
         }
     }
 
@@ -130,6 +150,7 @@ public sealed partial class RepoPage : Page
             bool success = GitService.InitRepository(gitPath, path);
             if (success)
             {
+                AppLogger.OK(TAG, $"仓库初始化成功: {path}");
                 ShowInfoBar("成功", $"仓库初始化成功: {path}", InfoBarSeverity.Success);
             }
             else
@@ -139,35 +160,43 @@ public sealed partial class RepoPage : Page
         }
         catch (Exception ex)
         {
+            AppLogger.Error(TAG, $"git init 异常: {ex.Message}");
             ShowInfoBar("错误", $"错误: {ex.Message}", InfoBarSeverity.Error);
         }
     }
 
     private async void OnOpenRepo(object sender, RoutedEventArgs e)
     {
-        var folderPicker = new Windows.Storage.Pickers.FolderPicker();
-        folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.ComputerFolder;
-        folderPicker.FileTypeFilter.Add("*");
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
-        WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, hwnd);
-        var folder = await folderPicker.PickSingleFolderAsync();
-        if (folder == null)
-            return;
+        try
+        {
+            var folderPicker = new Windows.Storage.Pickers.FolderPicker();
+            folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.ComputerFolder;
+            folderPicker.FileTypeFilter.Add("*");
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, hwnd);
+            var folder = await folderPicker.PickSingleFolderAsync();
+            if (folder == null) return;
 
-        string repoPath = folder.Path;
-        if (GitService.IsGitRepository(repoPath))
-        {
-            _currentRepoPath = repoPath;
-            RepoActionsPanel.Visibility = Visibility.Collapsed;
-            RepoNameDisplay.Text = Path.GetFileName(repoPath);
-            RepoNameDisplay.Visibility = Visibility.Visible;
-            UpdateCloneUI();
-            RefreshStatus();
-            ShowInfoBar("成功", $"已打开仓库: {Path.GetFileName(repoPath)}", InfoBarSeverity.Success);
+            string repoPath = folder.Path;
+            if (GitService.IsGitRepository(repoPath))
+            {
+                AppState.CurrentRepoPath = repoPath;
+                RepoActionsPanel.Visibility = Visibility.Collapsed;
+                RepoNameDisplay.Text = Path.GetFileName(repoPath);
+                RepoNameDisplay.Visibility = Visibility.Visible;
+                UpdateCloneUI();
+                AppLogger.OK(TAG, $"已打开仓库: {repoPath}");
+                ShowInfoBar("成功", $"已打开仓库: {Path.GetFileName(repoPath)}", InfoBarSeverity.Success);
+            }
+            else
+            {
+                ShowInfoBar("错误", "所选目录不是 Git 仓库！", InfoBarSeverity.Error);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ShowInfoBar("错误", "所选目录不是 Git 仓库！", InfoBarSeverity.Error);
+            AppLogger.Error(TAG, $"打开仓库异常: {ex.Message}");
+            ShowInfoBar("错误", $"打开异常: {ex.Message}", InfoBarSeverity.Error);
         }
     }
 
@@ -178,7 +207,8 @@ public sealed partial class RepoPage : Page
 
     private async void OnCloneRepository(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(_currentRepoPath) || !Directory.Exists(_currentRepoPath))
+        var repoPath = AppState.CurrentRepoPath;
+        if (string.IsNullOrEmpty(repoPath) || !Directory.Exists(repoPath))
         {
             ShowInfoBar("错误", "请先打开一个 Git 仓库!", InfoBarSeverity.Error);
             return;
@@ -191,7 +221,7 @@ public sealed partial class RepoPage : Page
             return;
         }
 
-        string targetDir = _currentRepoPath;
+        string targetDir = repoPath;
 
         var dialog = new ContentDialog
         {
@@ -202,8 +232,7 @@ public sealed partial class RepoPage : Page
             XamlRoot = this.XamlRoot
         };
         var result = await dialog.ShowAsync();
-        if (result != ContentDialogResult.Primary)
-            return;
+        if (result != ContentDialogResult.Primary) return;
 
         var settings = SettingsService.Load();
         string? gitPath = settings.GitPath;
@@ -216,22 +245,20 @@ public sealed partial class RepoPage : Page
         try
         {
             string gitDir = Path.Combine(targetDir, ".git");
-            if (Directory.Exists(gitDir))
-            {
-                Directory.Delete(gitDir, true);
-            }
+            if (Directory.Exists(gitDir)) Directory.Delete(gitDir, true);
 
             ShowInfoBar("提示", "正在克隆，请稍候...", InfoBarSeverity.Informational);
+            AppLogger.Info(TAG, $"开始克隆: {url} → {targetDir}");
             bool success = await Task.Run(() => GitService.CloneRepository(gitPath, url, targetDir));
             if (success)
             {
+                AppLogger.OK(TAG, $"克隆成功: {targetDir}");
                 ShowInfoBar("成功", $"克隆成功！已保存至: {targetDir}", InfoBarSeverity.Success);
                 if (GitService.IsGitRepository(targetDir))
                 {
-                    _currentRepoPath = targetDir;
+                    AppState.CurrentRepoPath = targetDir;
                     RepoNameDisplay.Text = Path.GetFileName(targetDir);
                     UpdateCloneUI();
-                    RefreshStatus();
                 }
             }
             else
@@ -241,78 +268,30 @@ public sealed partial class RepoPage : Page
         }
         catch (Exception ex)
         {
+            AppLogger.Error(TAG, $"克隆异常: {ex.Message}");
             ShowInfoBar("错误", $"克隆异常: {ex.Message}", InfoBarSeverity.Error);
         }
     }
 
     private void UpdateCloneUI()
     {
-        bool isRepoOpen = !string.IsNullOrEmpty(_currentRepoPath) && Directory.Exists(_currentRepoPath);
+        var repoPath = AppState.CurrentRepoPath;
+        bool isRepoOpen = !string.IsNullOrEmpty(repoPath) && Directory.Exists(repoPath);
         if (isRepoOpen)
         {
             ClonePanel.Visibility = Visibility.Visible;
-            CloneTargetTextBox.Text = _currentRepoPath;
+            CloneTargetTextBox.Text = repoPath;
             CloneTargetTextBox.IsEnabled = false;
             CloneTargetHint.Text = "将克隆到当前仓库目录（会删除 .git）";
             CloneTargetHint.Visibility = Visibility.Visible;
-            CloneUrlTextBox.Focus(FocusState.Programmatic);
-            StatusPanel.Visibility = Visibility.Visible;
         }
         else
         {
             ClonePanel.Visibility = Visibility.Collapsed;
-            StatusPanel.Visibility = Visibility.Collapsed;
         }
     }
 
-    private void RefreshStatus()
-    {
-        if (string.IsNullOrEmpty(_currentRepoPath) || !Directory.Exists(_currentRepoPath))
-        {
-            StatusPanel.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        var settings = SettingsService.Load();
-        string? gitPath = settings.GitPath;
-        if (string.IsNullOrEmpty(gitPath) || !File.Exists(gitPath))
-        {
-            ShowInfoBar("错误", "Git 路径无效!", InfoBarSeverity.Error);
-            return;
-        }
-
-        try
-        {
-            // 获取当前分支
-            var branchProcess = new System.Diagnostics.Process();
-            branchProcess.StartInfo.FileName = gitPath;
-            branchProcess.StartInfo.Arguments = "branch --show-current";
-            branchProcess.StartInfo.WorkingDirectory = _currentRepoPath;
-            branchProcess.StartInfo.UseShellExecute = false;
-            branchProcess.StartInfo.RedirectStandardOutput = true;
-            branchProcess.StartInfo.CreateNoWindow = true;
-            branchProcess.Start();
-            string branch = branchProcess.StandardOutput.ReadToEnd().Trim();
-            branchProcess.WaitForExit();
-            BranchNameText.Text = branch;
-
-            // 获取状态
-            var status = GitService.GetStatus(_currentRepoPath, gitPath);
-            StatusListView.ItemsSource = status;
-            StatusPanel.Visibility = Visibility.Visible;
-        }
-        catch (Exception ex)
-        {
-            ShowInfoBar("错误", $"获取状态失败: {ex.Message}", InfoBarSeverity.Error);
-            StatusPanel.Visibility = Visibility.Collapsed;
-        }
-    }
-
-    private void OnRefreshStatus(object sender, RoutedEventArgs e)
-    {
-        RefreshStatus();
-    }
-
+    // ========== InfoBar ==========
     private async void ShowInfoBar(string title, string message, InfoBarSeverity severity)
     {
         if (_isInfoBarAnimating)
@@ -327,8 +306,9 @@ public sealed partial class RepoPage : Page
 
         SlideInStoryboard.Stop();
         SlideOutStoryboard.Stop();
+        InfoBarTransform.Y = -80;
         InfoBarContainer.Opacity = 0;
-        InfoBarTransform.Y = -100;
+        InfoBarContainer.Visibility = Visibility.Visible;
 
         StatusInfoBar.Title = title;
         StatusInfoBar.Message = message;
@@ -341,13 +321,13 @@ public sealed partial class RepoPage : Page
             await Task.Delay(3000, token);
             SlideOutStoryboard.Begin();
             await Task.Delay(200);
-            InfoBarContainer.Opacity = 0;
-            InfoBarTransform.Y = -100;
+            InfoBarContainer.Visibility = Visibility.Collapsed;
         }
         catch (TaskCanceledException)
         {
+            InfoBarContainer.Visibility = Visibility.Collapsed;
+            InfoBarTransform.Y = -80;
             InfoBarContainer.Opacity = 0;
-            InfoBarTransform.Y = -100;
             SlideInStoryboard.Stop();
             SlideOutStoryboard.Stop();
         }

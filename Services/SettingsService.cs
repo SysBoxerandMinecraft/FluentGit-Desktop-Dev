@@ -7,8 +7,9 @@ namespace FluentGit.Services;
 public class AppSettings
 {
     public string? GitPath { get; set; }
-    public string? GitHash { get; set; }   // 新增：存储 git.exe 的 SHA-256 哈希
+    public string? GitHash { get; set; }
     public string? AppTheme { get; set; }
+    public bool FilterBuildArtifacts { get; set; } = true;   // ★ 新增，默认开启
 }
 
 public static class SettingsService

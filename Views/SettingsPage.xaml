@@ -4,101 +4,38 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
-    <Page.Resources>
-        <!-- 滑入动画：同时改变透明度 (0→1) 和位置 (-400→0) -->
-        <Storyboard x:Name="SlideInStoryboard">
-            <DoubleAnimation
-                Storyboard.TargetName="InfoBarContainer"
-                Storyboard.TargetProperty="Opacity"
-                From="0"
-                To="1"
-                Duration="0:0:0.3">
-                <DoubleAnimation.EasingFunction>
-                    <CubicEase EasingMode="EaseOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="InfoBarTransform"
-                Storyboard.TargetProperty="X"
-                From="-400"
-                To="0"
-                Duration="0:0:0.3">
-                <DoubleAnimation.EasingFunction>
-                    <CubicEase EasingMode="EaseOut" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-        <!-- 滑出动画：同时改变透明度 (1→0) 和位置 (0→-400) -->
-        <Storyboard x:Name="SlideOutStoryboard">
-            <DoubleAnimation
-                Storyboard.TargetName="InfoBarContainer"
-                Storyboard.TargetProperty="Opacity"
-                From="1"
-                To="0"
-                Duration="0:0:0.2">
-                <DoubleAnimation.EasingFunction>
-                    <CubicEase EasingMode="EaseIn" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation
-                Storyboard.TargetName="InfoBarTransform"
-                Storyboard.TargetProperty="X"
-                From="0"
-                To="-400"
-                Duration="0:0:0.2">
-                <DoubleAnimation.EasingFunction>
-                    <CubicEase EasingMode="EaseIn" />
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-    </Page.Resources>
     <Grid Margin="30,30,0,0">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
-        <!-- Git 路径设置（唯一内容） -->
-        <StackPanel Grid.Row="0" HorizontalAlignment="Left">
+        <StackPanel HorizontalAlignment="Left">
             <TextBlock Text="Git 安装路径" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
-            
+
             <TextBlock x:Name="SelectedPathDisplay" 
-                       Text="当前选中路径：无" 
+                       Text="正在查找 Git..." 
                        FontSize="14" 
                        Foreground="Gray" 
-                       Margin="0,0,0,5"/>
+                       Margin="0,0,0,10"/>
 
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" 
-                          Margin="0,0,0,10" Width="300" HorizontalAlignment="Left">
-                <TextBox x:Name="GitPathTextBox" 
-                         PlaceholderText="例如: C:\Program Files\Git\bin\git.exe"
-                         TextWrapping="NoWrap" />
-            </ScrollViewer>
+            <ProgressRing x:Name="LoadingRing"
+                          IsActive="True"
+                          Width="24" Height="24"
+                          HorizontalAlignment="Left"
+                          Margin="0,0,0,10" />
 
-            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Left">
-                <Button Content="浏览..." Click="OnBrowseGitPath" />
-                <Button Content="自动查找" Click="OnAutoFindGitPath" />
-                <Button Content="保存" Click="OnSaveGitPath" />
-            </StackPanel>
+            <!-- ★ 新增：过滤选项 -->
+            <CheckBox x:Name="FilterArtifactsCheckBox"
+                      Content="过滤编译产物 / 临时文件（bin、obj、node_modules 等）"
+                      Margin="0,20,0,0"
+                      Checked="OnFilterArtifactsChecked"
+                      Unchecked="OnFilterArtifactsUnchecked" />
 
-            <!-- InfoBar 容器 -->
-            <Border x:Name="InfoBarContainer" 
-                    Margin="0,10,0,0" 
-                    HorizontalAlignment="Left" 
-                    MinWidth="300"
-                    Opacity="0">
-                <Border.RenderTransform>
-                    <TranslateTransform x:Name="InfoBarTransform" X="-400" />
-                </Border.RenderTransform>
-                <InfoBar x:Name="StatusInfoBar"
-                         IsOpen="True"
-                         IsClosable="False"
-                         Severity="Success"
-                         Title=""
-                         Message=""
-                         HorizontalAlignment="Left"
-                         MinWidth="300" />
-            </Border>
+            <InfoBar x:Name="StatusInfoBar"
+                     IsOpen="False"
+                     IsClosable="False"
+                     Severity="Success"
+                     Title=""
+                     Message=""
+                     HorizontalAlignment="Left"
+                     MinWidth="300"
+                     Margin="0,15,0,0" />
         </StackPanel>
     </Grid>
 </Page>

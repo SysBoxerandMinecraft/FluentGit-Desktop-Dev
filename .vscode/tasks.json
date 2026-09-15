@@ -1,0 +1,54 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-debug",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/FluentGit.csproj",
+                "-c", "Debug",
+                "-p:Platform=x64"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent",
+                "clear": true
+            }
+        },
+        {
+            "label": "clean",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "clean",
+                "${workspaceFolder}/FluentGit.csproj",
+                "-c", "Debug",
+                "-p:Platform=x64"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-msix",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/FluentGit.csproj",
+                "-c", "Release",
+                "-p:Platform=x64",
+                "-p:RuntimeIdentifier=win-x64",
+                "-p:WindowsPackageType=MSIX",
+                "-p:WindowsAppSDKSelfContained=false",
+                "-p:GenerateAppxPackageOnBuild=true",
+                "-p:AppxPackageSigningEnabled=false"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
