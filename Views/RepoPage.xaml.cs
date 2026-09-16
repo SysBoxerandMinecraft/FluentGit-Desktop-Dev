@@ -35,6 +35,7 @@ public sealed partial class RepoPage : Page
         UpdateCloneUI();
     }
 
+    // ========== Git 检测 ==========
     private void CheckGitAvailability()
     {
         try
@@ -86,6 +87,7 @@ public sealed partial class RepoPage : Page
                 AppLogger.Warning(TAG, "未找到 Git");
                 GitWarningPanel.Visibility = Visibility.Visible;
                 RepoActionsPanel.Visibility = Visibility.Collapsed;
+                RepoOpsPanel.Visibility = Visibility.Collapsed;
                 ClonePanel.Visibility = Visibility.Collapsed;
             }
             else
@@ -100,6 +102,7 @@ public sealed partial class RepoPage : Page
         }
     }
 
+    // ========== 浏览目录（初始化用） ==========
     private void OnBrowseForInit(object sender, RoutedEventArgs e)
     {
         try
@@ -118,6 +121,7 @@ public sealed partial class RepoPage : Page
         }
     }
 
+    // ========== 初始化仓库 ==========
     private void OnInitRepository(object sender, RoutedEventArgs e)
     {
         string path = RepoPathTextBox.Text.Trim();
@@ -165,6 +169,7 @@ public sealed partial class RepoPage : Page
         }
     }
 
+    // ========== 打开仓库 ==========
     private async void OnOpenRepo(object sender, RoutedEventArgs e)
     {
         try
@@ -200,11 +205,7 @@ public sealed partial class RepoPage : Page
         }
     }
 
-    private void OnBrowseCloneTarget(object sender, RoutedEventArgs e)
-    {
-        ShowInfoBar("提示", "已打开仓库，将克隆到当前仓库目录", InfoBarSeverity.Informational);
-    }
-
+    // ========== 克隆仓库 ==========
     private async void OnCloneRepository(object sender, RoutedEventArgs e)
     {
         var repoPath = AppState.CurrentRepoPath;
@@ -273,20 +274,108 @@ public sealed partial class RepoPage : Page
         }
     }
 
+    // ========== 拉取更新（git pull） ==========
+    private async void OnPullRepository(object sender, RoutedEventArgs e)
+    {
+        var repoPath = AppState.CurrentRepoPath;
+        if (string.IsNullOrEmpty(repoPath) || !Directory.Exists(repoPath))
+        {
+            ShowInfoBar("错误", "请先打开一个 Git 仓库!", InfoBarSeverity.Error);
+            return;
+        }
+
+        var settings = SettingsService.Load();
+        string? gitPath = settings.GitPath;
+        if (string.IsNullOrEmpty(gitPath) || !File.Exists(gitPath))
+        {
+            ShowInfoBar("错误", "Git 路径无效，请检查设置!", InfoBarSeverity.Error);
+            return;
+        }
+
+        try
+        {
+            PullButton.IsEnabled = false;
+            FetchButton.IsEnabled = false;
+
+            ShowInfoBar("提示", "正在拉取更新，请稍候...", InfoBarSeverity.Informational);
+
+            var result = await Task.Run(() => GitService.PullRepository(gitPath, repoPath));
+
+            if (result.Success)
+                ShowInfoBar("成功", result.Message, InfoBarSeverity.Success);
+            else
+                ShowInfoBar("错误", result.Message, InfoBarSeverity.Error);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(TAG, $"OnPullRepository 异常: {ex.Message}");
+            ShowInfoBar("错误", $"操作失败: {ex.Message}", InfoBarSeverity.Error);
+        }
+        finally
+        {
+            PullButton.IsEnabled = true;
+            FetchButton.IsEnabled = true;
+        }
+    }
+
+    // ========== 获取远程信息（git fetch） ==========
+    private async void OnFetchRepository(object sender, RoutedEventArgs e)
+    {
+        var repoPath = AppState.CurrentRepoPath;
+        if (string.IsNullOrEmpty(repoPath) || !Directory.Exists(repoPath))
+        {
+            ShowInfoBar("错误", "请先打开一个 Git 仓库!", InfoBarSeverity.Error);
+            return;
+        }
+
+        var settings = SettingsService.Load();
+        string? gitPath = settings.GitPath;
+        if (string.IsNullOrEmpty(gitPath) || !File.Exists(gitPath))
+        {
+            ShowInfoBar("错误", "Git 路径无效，请检查设置!", InfoBarSeverity.Error);
+            return;
+        }
+
+        try
+        {
+            PullButton.IsEnabled = false;
+            FetchButton.IsEnabled = false;
+
+            ShowInfoBar("提示", "正在获取远程信息...", InfoBarSeverity.Informational);
+
+            var result = await Task.Run(() => GitService.FetchRepository(gitPath, repoPath));
+
+            if (result.Success)
+                ShowInfoBar("成功", result.Message, InfoBarSeverity.Success);
+            else
+                ShowInfoBar("错误", result.Message, InfoBarSeverity.Error);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(TAG, $"OnFetchRepository 异常: {ex.Message}");
+            ShowInfoBar("错误", $"操作失败: {ex.Message}", InfoBarSeverity.Error);
+        }
+        finally
+        {
+            PullButton.IsEnabled = true;
+            FetchButton.IsEnabled = true;
+        }
+    }
+
+    // ========== 更新界面状态 ==========
     private void UpdateCloneUI()
     {
         var repoPath = AppState.CurrentRepoPath;
         bool isRepoOpen = !string.IsNullOrEmpty(repoPath) && Directory.Exists(repoPath);
         if (isRepoOpen)
         {
+            RepoOpsPanel.Visibility = Visibility.Visible;
             ClonePanel.Visibility = Visibility.Visible;
-            CloneTargetTextBox.Text = repoPath;
-            CloneTargetTextBox.IsEnabled = false;
-            CloneTargetHint.Text = "将克隆到当前仓库目录（会删除 .git）";
             CloneTargetHint.Visibility = Visibility.Visible;
         }
         else
         {
+            RepoOpsPanel.Visibility = Visibility.Collapsed;
             ClonePanel.Visibility = Visibility.Collapsed;
         }
     }

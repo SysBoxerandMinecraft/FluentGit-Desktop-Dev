@@ -7,7 +7,6 @@
       mc:Ignorable="d"
       NavigationCacheMode="Required">
     <Page.Resources>
-        <!-- 滑入：从顶部滑下 + 淡入 -->
         <Storyboard x:Name="SlideInStoryboard">
             <DoubleAnimation Storyboard.TargetName="InfoBarTransform" Storyboard.TargetProperty="Y"
                              From="-80" To="0" Duration="0:0:0.3">
@@ -18,7 +17,6 @@
                 <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
             </DoubleAnimation>
         </Storyboard>
-        <!-- 滑出：向上滑走 + 淡出 -->
         <Storyboard x:Name="SlideOutStoryboard">
             <DoubleAnimation Storyboard.TargetName="InfoBarTransform" Storyboard.TargetProperty="Y"
                              From="0" To="-80" Duration="0:0:0.2">
@@ -47,10 +45,11 @@
                      IsClosable="False"
                      Severity="Success"
                      Title=""
-                     Message="" />
+                     Message="" 
+                     MaxWidth="500"/>
         </Border>
 
-        <!-- 主内容（单列） -->
+        <!-- 主内容 -->
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top"
                         Margin="30,90,30,30" MinWidth="400">
@@ -79,31 +78,36 @@
                     </StackPanel>
                 </StackPanel>
 
-                <Border x:Name="ClonePanel" BorderBrush="Gray" BorderThickness="0,1,0,0"
-                        Padding="0,10,0,0" Margin="0,15,0,0" Visibility="Collapsed">
+                <!-- ★ 仓库操作面板（打开仓库后显示） -->
+                <Border x:Name="RepoOpsPanel"
+                        BorderBrush="Gray" BorderThickness="0,1,0,0"
+                        Padding="0,10,0,0" Margin="0,15,0,0"
+                        Visibility="Collapsed">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="克隆远程仓库" FontWeight="SemiBold" FontSize="16" />
-                        <TextBox x:Name="CloneUrlTextBox"
-                                 PlaceholderText="例如: https://github.com/用户名/仓库.git"
-                                 MinHeight="32" />
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="CloneTargetTextBox" Grid.Column="0"
-                                     PlaceholderText="目标目录" MinHeight="32"
-                                     Margin="0,0,10,0" IsEnabled="False" />
-                            <Button Grid.Column="1" Content="浏览..."
-                                    Click="OnBrowseCloneTarget" IsEnabled="False" MinHeight="32" />
-                        </Grid>
-                        <TextBlock x:Name="CloneTargetHint"
-                                   Text="将克隆到当前仓库目录（会删除 .git）"
-                                   FontSize="12" Foreground="Gray" />
-                        <Button x:Name="CloneButton" Content="克隆"
-                                Click="OnCloneRepository" HorizontalAlignment="Left" MinHeight="32" />
+                        <TextBlock Text="仓库操作" FontWeight="SemiBold" FontSize="16" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button x:Name="PullButton" Content="更新（git pull）"
+                                    Click="OnPullRepository" MinHeight="32" />
+                            <Button x:Name="FetchButton" Content="获取（git fetch）"
+                                    Click="OnFetchRepository" MinHeight="32" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
+
+                <Border x:Name="ClonePanel" BorderBrush="Gray" BorderThickness="0,1,0,0"
+        Padding="0,10,0,0" Margin="0,15,0,0" Visibility="Collapsed">
+    <StackPanel Spacing="10">
+        <TextBlock Text="克隆远程仓库" FontWeight="SemiBold" FontSize="16" />
+        <TextBox x:Name="CloneUrlTextBox"
+                 PlaceholderText="例如: https://github.com/用户名/仓库.git"
+                 MinHeight="32" />
+        <TextBlock x:Name="CloneTargetHint"
+                   Text="将克隆到当前仓库目录（会删除 .git）"
+                   FontSize="12" Foreground="Gray" />
+        <Button x:Name="CloneButton" Content="克隆"
+                Click="OnCloneRepository" HorizontalAlignment="Left" MinHeight="32" />
+    </StackPanel>
+</Border>
             </StackPanel>
         </ScrollViewer>
     </Grid>
