@@ -86,9 +86,9 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="仓库操作" FontWeight="SemiBold" FontSize="16" />
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Button x:Name="PullButton" Content="更新（git pull）"
+                            <Button x:Name="PullButton" Content="更新"
                                     Click="OnPullRepository" MinHeight="32" />
-                            <Button x:Name="FetchButton" Content="获取（git fetch）"
+                            <Button x:Name="FetchButton" Content="获取"
                                     Click="OnFetchRepository" MinHeight="32" />
                         </StackPanel>
                     </StackPanel>
