@@ -42,6 +42,8 @@
 
 ```
 FluentGit/
+├── Easteregg/
+│   ├──你应该自己去看看。
 ├── Views/                          # 页面层
 │   ├── MainWindow.xaml             # 主窗口（Mica + 自定义 TitleBar）
 │   ├── RepoPage.xaml               # 仓库管理、同步、提交
@@ -117,7 +119,7 @@ dotnet publish -c Release -p:Platform=x64 `
 
 ## 🧘 开发者彩蛋
 
-`App.xaml.cs` 的构造函数顶部供奉了一尊 **电子佛祖**，用于保佑代码无 BUG。
+`MainWindow.xaml.cs` 的构造函数顶部供奉了一尊 **电子佛祖**，用于保佑代码无 BUG。
 
 > **请勿移除**。实测移除后 BUG 率上升 100%。（开玩笑的……大概）
 
@@ -145,7 +147,8 @@ MIT License
 - [Git for Windows](https://gitforwindows.org/)
 - [Windows App SDK](https://learn.microsoft.com/windows/apps/windows-app-sdk/)
 - 所有贡献者与用户
-
+---
+更多彩蛋见 [`Easteregg/README.md`](./Easteregg/README.md)。
 ---
 
 > **FluentGit** — 让 Git 更优雅。

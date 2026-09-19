@@ -40,6 +40,8 @@
 
 ```
 FluentGit/
+├── Easteregg/
+│   ├──You should go see for yourself.
 ├── Views/                          # Pages
 │   ├── MainWindow.xaml             # Main window (Mica + custom TitleBar)
 │   ├── RepoPage.xaml               # Repo management, sync, commit
@@ -115,7 +117,7 @@ dotnet publish -c Release -p:Platform=x64 `
 
 ## 🧘 Developer Easter Egg
 
-A **digital Buddha** is enshrined at the top of the `App.xaml.cs` constructor to bless the code with no BUGs.
+A **digital Buddha** is enshrined at the top of the `MainWindow.xaml.cs` constructor to bless the code with no BUGs.
 
 > **Do NOT remove.** Tested: removing it increases BUG rate by 100%. (Just kidding... probably.)
 
@@ -144,6 +146,8 @@ MIT License
 - [Windows App SDK](https://learn.microsoft.com/windows/apps/windows-app-sdk/)
 - All contributors and users
 
+---
+See [`Easteregg/README.en.md`](./Easteregg/README.en.md) for more Easter eggs.
 ---
 
 > **FluentGit** — Making Git more elegant.
