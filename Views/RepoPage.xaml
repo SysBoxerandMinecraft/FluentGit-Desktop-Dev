@@ -45,14 +45,15 @@
                      IsClosable="False"
                      Severity="Success"
                      Title=""
-                     Message="" 
-                     MaxWidth="500"/>
+                     Message=""
+                     MaxWidth="500" />
         </Border>
 
         <!-- 主内容 -->
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top"
                         Margin="30,90,30,30" MinWidth="400">
+
                 <TextBlock x:Name="RepoNameDisplay" FontSize="24" FontWeight="SemiBold"
                            Visibility="Collapsed" Margin="0,0,0,15" />
 
@@ -61,6 +62,7 @@
                     <HyperlinkButton Content="下载 Git for Windows" NavigateUri="https://git-scm.com/install/windows" />
                 </StackPanel>
 
+                <!-- ★ 操作面板：初始化 / 打开 / 克隆 -->
                 <StackPanel x:Name="RepoActionsPanel" Visibility="Visible" Spacing="10">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -73,12 +75,16 @@
                         <Button Grid.Column="1" Content="浏览..." Click="OnBrowseForInit" MinHeight="32" />
                     </Grid>
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Button x:Name="InitRepoButton" Content="初始化仓库" Click="OnInitRepository" MinHeight="32" />
-                        <Button x:Name="OpenRepoButton" Content="打开仓库" Click="OnOpenRepo" MinHeight="32" />
+                        <Button x:Name="InitRepoButton" Content="初始化仓库"
+                                Click="OnInitRepository" MinHeight="32" />
+                        <Button x:Name="OpenRepoButton" Content="打开仓库"
+                                Click="OnOpenRepo" MinHeight="32" />
+                        <!-- <Button x:Name="CloneRepoButton" Content="克隆仓库"
+                                Click="OnCloneRepository" MinHeight="32" />!-->
                     </StackPanel>
                 </StackPanel>
 
-                <!-- ★ 仓库操作面板（打开仓库后显示） -->
+                <!-- 仓库操作面板（打开仓库后显示） -->
                 <Border x:Name="RepoOpsPanel"
                         BorderBrush="Gray" BorderThickness="0,1,0,0"
                         Padding="0,10,0,0" Margin="0,15,0,0"
@@ -94,20 +100,35 @@
                     </StackPanel>
                 </Border>
 
-                <Border x:Name="ClonePanel" BorderBrush="Gray" BorderThickness="0,1,0,0"
-        Padding="0,10,0,0" Margin="0,15,0,0" Visibility="Collapsed">
-    <StackPanel Spacing="10">
-        <TextBlock Text="克隆远程仓库" FontWeight="SemiBold" FontSize="16" />
-        <TextBox x:Name="CloneUrlTextBox"
-                 PlaceholderText="例如: https://github.com/用户名/仓库.git"
-                 MinHeight="32" />
-        <TextBlock x:Name="CloneTargetHint"
-                   Text="将克隆到当前仓库目录（会删除 .git）"
-                   FontSize="12" Foreground="Gray" />
-        <Button x:Name="CloneButton" Content="克隆"
-                Click="OnCloneRepository" HorizontalAlignment="Left" MinHeight="32" />
-    </StackPanel>
-</Border>
+                <!-- 提交面板（打开仓库后显示） -->
+                <Border x:Name="CommitPanel"
+                        BorderBrush="Gray" BorderThickness="0,1,0,0"
+                        Padding="0,10,0,0" Margin="0,15,0,0"
+                        Visibility="Collapsed">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="提交变更" FontWeight="SemiBold" FontSize="16" />
+
+                        <TextBlock x:Name="ChangeStatusText"
+                                   FontSize="13"
+                                   Foreground="Gray"
+                                   Text="正在读取变更..." />
+
+                        <TextBox x:Name="CommitMessageTextBox"
+                                 PlaceholderText="输入提交信息（必填）"
+                                 MinHeight="32"
+                                 AcceptsReturn="False" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button x:Name="AddAllButton" Content="全部暂存"
+                                    Click="OnAddAll" MinHeight="32" />
+                            <Button x:Name="CommitButton" Content="提交"
+                                    Click="OnCommit" MinHeight="32" />
+                            <Button x:Name="RefreshStatusButton" Content="刷新状态"
+                                    Click="OnRefreshChangeStatus" MinHeight="32" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
             </StackPanel>
         </ScrollViewer>
     </Grid>
