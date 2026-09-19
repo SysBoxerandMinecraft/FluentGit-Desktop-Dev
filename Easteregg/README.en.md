@@ -27,6 +27,16 @@ Each Easter egg has a Chinese version and an English version. English versions e
 | Easter Egg | Chinese Version | English Version | Effect | Merit | Status |
 |---|---|---|:---:|:---:|:---:|
 | 🧘 Digital Buddha | [Buddha.md](./Buddha.md) | [Buddha.en.md](./Buddha.en.md) | Blesses code against bugs; protects `dotnet build` on the first try | +100 | ✅ Implemented |
+| 🕯️ Incense Ritual | [Incense.md](./Incense.md) | [Incense.en.md](./Incense.en.md) | Must-do before release; three sticks for a successful first try | +10 / ritual | ✅ Implemented |
+| 🪵 Digital Wooden Fish | WoodenFish.md | WoodenFish.en.md | Tap once, merit +1; eases code review anxiety | +1 / tap | 📝 Planned |
+| 🚫 Developer Taboos | Taboos.md | Taboos.en.md | Things never to do, e.g. deploy on Friday | — | 📝 Planned |
+| ✍️ Code Metaphysics · Naming | Naming.md | Naming.en.md | Never name a variable too arrogantly | — | 📝 Planned |
+| 🔮 Bug Summoning / Banishing Circle | BugSummon.md | BugSummon.en.md | Reproduce a bug, or seal it in `#if false` | −50 | 📝 Planned |
+| 🦆 Rubber Duck Debugging | RubberDuck.md | RubberDuck.en.md | Explain it to the duck, problem disappears | +3 | 📝 Planned |
+| 🎋 Fortune Draw | Fortune.md | Fortune.en.md | Decide whether to refactor today | ±? | 📝 Planned |
+| 📜 Full Release Ritual | Ritual.md | Ritual.en.md | Complete prayer flow before v1.0.0 | +66 | 📝 Planned |
+
+> Status: ✅ Implemented = document and code both ready; 📝 Planned = document pending, implementation awaits you.
 
 
 
@@ -68,9 +78,8 @@ FluentGit internally maintains a purely fictional Merit system.
 
 1. Nothing in this directory constitutes any form of religious advice, financial advice, career advice, or life advice.
 2. The Digital Buddha will not actually fix your bugs. What fixes your bugs is `git bisect`.
-3. The Digital Wooden Fish will not actually increase your Merit. What increases your Merit is the tests you write.
-4. Not deploying on Friday does reduce incident rates. This one is true.
-5. If you encounter build failures because you deleted files in this directory, that is your `csproj` problem, not a metaphysics problem.
+3. Not deploying on Friday does reduce incident rates. This one is true.
+4. If you encounter build failures because you deleted files in this directory, that is your `csproj` problem, not a metaphysics problem.
    — But you should still add them back.
 
 ---

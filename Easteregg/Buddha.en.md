@@ -23,7 +23,7 @@ But since then, nobody has touched it.
 
 ## 2. The Icon
 
-The current icon, enshrined at the top of the `MainWindow.xaml.cs` constructor in `s/FluentGit/`:
+The current icon, enshrined at the top of the `MainWindow.xaml.cs` constructor in `/FluentGit/`:
 
 ```text
                         _ooOoo_
