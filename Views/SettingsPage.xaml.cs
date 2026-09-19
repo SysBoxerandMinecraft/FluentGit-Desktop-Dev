@@ -1,10 +1,12 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentGit.Services;
+using FluentGit.Services.Search;
 
 namespace FluentGit.Views;
 
@@ -14,8 +16,10 @@ public sealed partial class SettingsPage : Page
     private CancellationTokenSource? _infoBarCts;
     private const int InfoBarDisplayMilliseconds = 3000;
 
-    // 防止 OnLoaded 初始化 checkbox 时触发事件
     private bool _isUpdating = false;
+
+    // ★ 设置项索引（用于搜索）
+    private readonly List<SearchEntry> _settings = new();
 
     public SettingsPage()
     {
@@ -25,12 +29,70 @@ public sealed partial class SettingsPage : Page
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // ★ 初始化 checkbox 状态
+        BuildSearchIndex();
+
         _isUpdating = true;
         FilterArtifactsCheckBox.IsChecked = SettingsService.Load().FilterBuildArtifacts;
         _isUpdating = false;
 
         await AutoFindAndValidateGitAsync();
+    }
+
+    // ========== 搜索索引 ==========
+    private void BuildSearchIndex()
+    {
+        _settings.Clear();
+
+        _settings.Add(new SearchEntry
+        {
+            Title = "Git 安装路径",
+            Keywords = new[] { "git", "安装", "路径", "path", "install", "位置", "目录" },
+            Item = ItemGitPath,
+            Group = GroupGit
+        });
+
+        _settings.Add(new SearchEntry
+        {
+            Title = "过滤编译产物 / 临时文件",
+            Keywords = new[]
+            {
+                "过滤", "编译", "产物", "临时", "文件", "隐藏",
+                "bin", "obj", "node_modules", "__pycache__",
+                "filter", "artifact", "build", "temp", "cache"
+            },
+            Item = ItemFilterArtifacts,
+            Group = GroupTreeView
+        });
+    }
+
+    // ========== 搜索事件 ==========
+    private void OnSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;
+        ApplySearch(sender.Text.Trim());
+    }
+
+    private void OnSearchQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        if (args.ChosenSuggestion is string title)
+        {
+            sender.Text = title;
+            ApplySearch(title);
+        }
+    }
+
+    private void OnSearchSuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+    {
+        if (args.SelectedItem is string title)
+            sender.Text = title;
+    }
+
+    private void ApplySearch(string query)
+    {
+        var matchedTitles = SearchService.ApplyFilter(_settings, query, out bool hasAnyMatch);
+
+        NoResultText.Visibility = hasAnyMatch ? Visibility.Collapsed : Visibility.Visible;
+        SearchBox.ItemsSource = matchedTitles.Count > 0 ? matchedTitles : null;
     }
 
     // ========== 过滤选项事件 ==========
@@ -76,19 +138,17 @@ public sealed partial class SettingsPage : Page
                 return;
             }
 
-            if (!GitPathHelper.ValidateGitPath(gitPath, GitPathHelper.ExpectedGitHash))
+            if (!GitPathHelper.ValidateGitPath(gitPath))
             {
-                var actualHash = GitPathHelper.ComputeFileHash(gitPath);
                 UpdateSelectedPathDisplay(gitPath);
-                AppLogger.Error(TAG, $"哈希不匹配: {gitPath}");
+                AppLogger.Error(TAG, $"签名验证失败: {gitPath}");
                 ShowInfoBar("错误",
-                    $"找到的 git.exe 哈希值不匹配！期望: {GitPathHelper.ExpectedGitHash[..16]}... 实际: {actualHash?[..16]}...",
+                    "找到的 Git 未通过签名验证，可能不是官方版本。",
                     InfoBarSeverity.Error);
                 return;
             }
 
             settings.GitPath = gitPath;
-            settings.GitHash = GitPathHelper.ComputeFileHash(gitPath);
             SettingsService.Save(settings);
 
             UpdateSelectedPathDisplay(gitPath);
@@ -114,27 +174,49 @@ public sealed partial class SettingsPage : Page
             SelectedPathDisplay.Text = $"当前 Git 路径：{path}";
     }
 
-    // ========== InfoBar ==========
+    // ========== InfoBar（从标题右侧滑入） ==========
+    // ========== InfoBar（从上方滑入，向上滑出） ==========
     private async void ShowInfoBar(string title, string message, InfoBarSeverity severity)
     {
-        _infoBarCts?.Cancel();
-        var newCts = new CancellationTokenSource();
-        _infoBarCts = newCts;
+       _infoBarCts?.Cancel();
+       var newCts = new CancellationTokenSource();
+       _infoBarCts = newCts;
+       var token = newCts.Token;
 
-        StatusInfoBar.Title = title;
-        StatusInfoBar.Message = message;
-        StatusInfoBar.Severity = severity;
+        // 停掉所有动画，复位
+       SlideInStoryboard.Stop();
+       SlideOutStoryboard.Stop();
+       InfoBarTransform.Y = -30;
+       InfoBarContainer.Opacity = 0;
+       InfoBarContainer.Visibility = Visibility.Visible;
 
-        StatusInfoBar.IsOpen = false;
-        await Task.Delay(50);
-        StatusInfoBar.IsOpen = true;
+      // 设置内容
+      StatusInfoBar.Title = title;
+      StatusInfoBar.Message = message;
+      StatusInfoBar.Severity = severity;
 
-        try
-        {
-            await Task.Delay(InfoBarDisplayMilliseconds, newCts.Token);
-            if (_infoBarCts == newCts)
-                StatusInfoBar.IsOpen = false;
+      // 播放滑入
+       SlideInStoryboard.Begin();
+
+       try
+       {
+           await Task.Delay(InfoBarDisplayMilliseconds, token);
+
+            // 播放滑出
+            SlideOutStoryboard.Begin();
+            await Task.Delay(200);
+
+            InfoBarContainer.Visibility = Visibility.Collapsed;
+            InfoBarTransform.Y = -30;
+            InfoBarContainer.Opacity = 0;
         }
-        catch (TaskCanceledException) { }
+        catch (TaskCanceledException)
+            {
+            InfoBarContainer.Visibility = Visibility.Collapsed;
+            InfoBarTransform.Y = -30;
+            InfoBarContainer.Opacity = 0;
+            SlideInStoryboard.Stop();
+            SlideOutStoryboard.Stop();
+       }
     }
 }

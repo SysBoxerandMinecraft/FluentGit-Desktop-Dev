@@ -4,38 +4,174 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
-    <Grid Margin="30,30,0,0">
-        <StackPanel HorizontalAlignment="Left">
-            <TextBlock Text="Git 安装路径" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
+    <Page.Resources>
+        <!-- 滑入：从上方滑下来 + 淡入 -->
+        <Storyboard x:Name="SlideInStoryboard">
+            <DoubleAnimation Storyboard.TargetName="InfoBarTransform"
+                             Storyboard.TargetProperty="Y"
+                             From="-30" To="0"
+                             Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="InfoBarContainer"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1"
+                             Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
 
-            <TextBlock x:Name="SelectedPathDisplay" 
-                       Text="正在查找 Git..." 
-                       FontSize="14" 
-                       Foreground="Gray" 
-                       Margin="0,0,0,10"/>
+        <!-- 滑出：向上滑回去 + 淡出 -->
+        <Storyboard x:Name="SlideOutStoryboard">
+            <DoubleAnimation Storyboard.TargetName="InfoBarTransform"
+                             Storyboard.TargetProperty="Y"
+                             From="0" To="-30"
+                             Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="InfoBarContainer"
+                             Storyboard.TargetProperty="Opacity"
+                             From="1" To="0"
+                             Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+    </Page.Resources>
 
-            <ProgressRing x:Name="LoadingRing"
-                          IsActive="True"
-                          Width="24" Height="24"
-                          HorizontalAlignment="Left"
-                          Margin="0,0,0,10" />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <!-- ★ 新增：过滤选项 -->
-            <CheckBox x:Name="FilterArtifactsCheckBox"
-                      Content="过滤编译产物 / 临时文件（bin、obj、node_modules 等）"
-                      Margin="0,20,0,0"
-                      Checked="OnFilterArtifactsChecked"
-                      Unchecked="OnFilterArtifactsUnchecked" />
+        <!-- 顶部：设置 + InfoBar + 搜索框 -->
+        <Grid Grid.Row="0" Margin="30,24,30,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-            <InfoBar x:Name="StatusInfoBar"
-                     IsOpen="False"
-                     IsClosable="False"
-                     Severity="Success"
-                     Title=""
-                     Message=""
-                     HorizontalAlignment="Left"
-                     MinWidth="300"
-                     Margin="0,15,0,0" />
-        </StackPanel>
+            <!-- 标题 -->
+            <TextBlock Grid.Column="0"
+                       Text="设置"
+                       FontSize="28"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center"/>
+
+            <!-- ★ InfoBar 容器 -->
+            <Border x:Name="InfoBarContainer"
+                    Grid.Column="1"
+                    Margin="20,0,20,0"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Left"
+                    Opacity="0"
+                    Visibility="Collapsed">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="InfoBarTransform" Y="-30"/>
+                </Border.RenderTransform>
+                <InfoBar x:Name="StatusInfoBar"
+                         IsOpen="True"
+                         IsClosable="False"
+                         Severity="Success"
+                         Title=""
+                         Message=""
+                         MinWidth="300"/>
+            </Border>
+
+            <!-- 搜索框 -->
+            <AutoSuggestBox x:Name="SearchBox"
+                            Grid.Column="2"
+                            Width="300"
+                            Height="36"
+                            VerticalContentAlignment="Center"
+                            PlaceholderText="搜索设置选项"
+                            QueryIcon="Find"
+                            TextChanged="OnSearchTextChanged"
+                            QuerySubmitted="OnSearchQuerySubmitted"
+                            SuggestionChosen="OnSearchSuggestionChosen"/>
+        </Grid>
+
+        <!-- 内容区 -->
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="30,6,30,30" Spacing="24">
+
+                <!-- 无结果提示 -->
+                <TextBlock x:Name="NoResultText"
+                           Text="未找到匹配的设置选项"
+                           FontSize="14"
+                           Foreground="Gray"
+                           Visibility="Collapsed"
+                           Margin="0,20,0,0"/>
+
+                <!-- ==================== Git 管理 ==================== -->
+                <StackPanel x:Name="GroupGit" Spacing="10">
+                    <TextBlock Text="Git 管理"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+
+                    <Border x:Name="ItemGitPath"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="16">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Git 安装路径"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"/>
+
+                            <TextBlock x:Name="SelectedPathDisplay"
+                                       Text="正在查找 Git..."
+                                       FontSize="13"
+                                       Foreground="Gray"
+                                       TextWrapping="Wrap"/>
+
+                            <ProgressRing x:Name="LoadingRing"
+                                          IsActive="True"
+                                          Width="24" Height="24"
+                                          HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ==================== 树状图显示选项 ==================== -->
+                <StackPanel x:Name="GroupTreeView" Spacing="10">
+                    <TextBlock Text="树状图显示选项"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+
+                    <Border x:Name="ItemFilterArtifacts"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="16">
+                        <StackPanel Spacing="6">
+                            <CheckBox x:Name="FilterArtifactsCheckBox"
+                                      Content="过滤编译产物 / 临时文件"
+                                      Checked="OnFilterArtifactsChecked"
+                                      Unchecked="OnFilterArtifactsUnchecked"/>
+                            <TextBlock Text="在目录树中隐藏 bin、obj、node_modules、__pycache__ 等构建产物和依赖目录"
+                                       FontSize="12"
+                                       Foreground="Gray"
+                                       TextWrapping="Wrap"
+                                       Margin="28,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

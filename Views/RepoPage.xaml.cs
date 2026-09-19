@@ -50,10 +50,9 @@ public sealed partial class RepoPage : Page
             if (string.IsNullOrEmpty(gitPath))
             {
                 gitPath = GitPathHelper.FindGitPath();
-                if (!string.IsNullOrEmpty(gitPath) && GitPathHelper.ValidateGitPath(gitPath, GitPathHelper.ExpectedGitHash))
+                if (!string.IsNullOrEmpty(gitPath) && GitPathHelper.ValidateGitPath(gitPath))
                 {
                     settings.GitPath = gitPath;
-                    settings.GitHash = GitPathHelper.ComputeFileHash(gitPath);
                     SettingsService.Save(settings);
                     AppLogger.OK(TAG, $"自动找到 Git: {gitPath}");
                 }
@@ -64,7 +63,7 @@ public sealed partial class RepoPage : Page
             }
 
             bool gitFound = false;
-            if (!string.IsNullOrEmpty(gitPath) && GitPathHelper.ValidateGitPath(gitPath, GitPathHelper.ExpectedGitHash))
+            if (!string.IsNullOrEmpty(gitPath) && GitPathHelper.ValidateGitPath(gitPath))
             {
                 try
                 {
@@ -232,281 +231,13 @@ public sealed partial class RepoPage : Page
     // ========== 克隆仓库 ==========
     private async void OnCloneRepository(object sender, RoutedEventArgs e)
     {
-        if (_isBusy) return;
-
-        var settings = SettingsService.Load();
-        string? gitPath = settings.GitPath;
-        if (string.IsNullOrEmpty(gitPath) || !File.Exists(gitPath))
-        {
-            ShowInfoBar("错误", "Git 路径无效，请检查设置!", InfoBarSeverity.Error);
-            return;
-        }
-
-        try
-        {
-            _isBusy = true;
-
-            // ───── 构建输入对话框 ─────
-            var urlBox = new TextBox
-            {
-                PlaceholderText = "https://github.com/用户名/仓库.git",
-                MinHeight = 32,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-
-            var targetBox = new TextBox
-            {
-                PlaceholderText = "选择目标目录",
-                MinHeight = 32,
-                Margin = new Thickness(0, 0, 10, 0),
-                IsReadOnly = true
-            };
-
-            var browseBtn = new Button
-            {
-                Content = "浏览...",
-                MinHeight = 32
-            };
-
-            browseBtn.Click += async (_, _) =>
-            {
-                try
-                {
-                    var picker = new Windows.Storage.Pickers.FolderPicker();
-                    picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.ComputerFolder;
-                    picker.FileTypeFilter.Add("*");
-                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
-                    WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-                    var folder = await picker.PickSingleFolderAsync();
-                    if (folder != null)
-                        targetBox.Text = folder.Path;
-                }
-                catch (Exception ex)
-                {
-                    AppLogger.Error(TAG, $"选择目标目录异常: {ex.Message}");
-                }
-            };
-
-            var targetRow = new Grid();
-            targetRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            targetRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            Grid.SetColumn(targetBox, 0);
-            Grid.SetColumn(browseBtn, 1);
-            targetRow.Children.Add(targetBox);
-            targetRow.Children.Add(browseBtn);
-
-            var panel = new StackPanel { Spacing = 5 };
-            panel.Children.Add(new TextBlock { Text = "远程仓库 URL：" });
-            panel.Children.Add(urlBox);
-            panel.Children.Add(new TextBlock { Text = "目标目录：", Margin = new Thickness(0, 10, 0, 0) });
-            panel.Children.Add(targetRow);
-
-            var dialog = new ContentDialog
-            {
-                Title = "克隆远程仓库",
-                Content = panel,
-                PrimaryButtonText = "克隆",
-                CloseButtonText = "取消",
-                DefaultButton = ContentDialogButton.Primary,
-                XamlRoot = this.XamlRoot
-            };
-
-            var result = await dialog.ShowAsync();
-            if (result != ContentDialogResult.Primary) return;
-
-            string url = urlBox.Text.Trim();
-            string targetDir = targetBox.Text.Trim();
-
-            // ───── 校验输入 ─────
-            if (string.IsNullOrEmpty(url))
-            {
-                ShowInfoBar("警告", "请输入远程仓库 URL!", InfoBarSeverity.Warning);
-                return;
-            }
-            if (string.IsNullOrEmpty(targetDir))
-            {
-                ShowInfoBar("警告", "请选择目标目录!", InfoBarSeverity.Warning);
-                return;
-            }
-            if (!Directory.Exists(targetDir))
-            {
-                ShowInfoBar("错误", "目标目录不存在!", InfoBarSeverity.Error);
-                return;
-            }
-
-            // ───── 检查目录是否为空 ─────
-            bool isEmpty = Directory.GetFiles(targetDir).Length == 0 &&
-                           Directory.GetDirectories(targetDir).Length == 0;
-
-            if (!isEmpty)
-            {
-                var confirmDialog = new ContentDialog
-                {
-                    Title = "⚠️ 目录非空",
-                    Content = $"目标目录不为空：\n\n{targetDir}\n\n" +
-                              "Git clone 需要空目录。是否清空后克隆？\n\n" +
-                              "此操作不可撤销！",
-                    PrimaryButtonText = "清空并克隆",
-                    CloseButtonText = "取消",
-                    DefaultButton = ContentDialogButton.Close,
-                    XamlRoot = this.XamlRoot
-                };
-                var confirmResult = await confirmDialog.ShowAsync();
-                if (confirmResult != ContentDialogResult.Primary) return;
-
-                AppLogger.Info(TAG, "清理残留 git 进程...");
-                await Task.Run(() => GitService.KillLingeringGitProcesses());
-
-                AppLogger.Info(TAG, $"删除目录: {targetDir}");
-                bool deleted = await Task.Run(() => GitService.ForceDeleteDirectory(targetDir));
-
-                if (!deleted)
-                {
-                    AppLogger.Error(TAG, $"目录删除失败: {targetDir}");
-                    ShowInfoBar("错误",
-                        "无法清空目录，可能有程序正在使用其中的文件。\n\n" +
-                        "请尝试：\n" +
-                        "1. 关闭所有 Git 客户端和终端\n" +
-                        "2. 在资源管理器中关闭该目录\n" +
-                        "3. 重启电脑后再试",
-                        InfoBarSeverity.Error);
-                    return;
-                }
-
-                try
-                {
-                    Directory.CreateDirectory(targetDir);
-                    AppLogger.OK(TAG, $"目录已清空并重建: {targetDir}");
-                }
-                catch (Exception ex)
-                {
-                    AppLogger.Error(TAG, $"重建目录失败: {ex.Message}");
-                    ShowInfoBar("错误", $"重建目录失败：{ex.Message}", InfoBarSeverity.Error);
-                    return;
-                }
-            }
-
-            // ───── 执行克隆（带进度窗口） ─────
-            AppLogger.Info(TAG, $"开始克隆: {url} → {targetDir}");
-
-            var (progressDialog, progressBar, progressStatus) = BuildCloneProgressDialog();
-
-            var cts = new CancellationTokenSource();
-            progressDialog.CloseButtonClick += (_, _) => cts.Cancel();
-
-            var dq = this.DispatcherQueue;
-
-            Action<int, string> onProgress = (percent, message) =>
-            {
-                dq.TryEnqueue(() =>
-                {
-                    progressBar.Value = percent;
-                    progressStatus.Text = message;
-                });
-            };
-
-            var cloneTask = Task.Run(() =>
-                GitService.CloneRepositoryWithProgress(gitPath, url, targetDir, onProgress, cts.Token));
-
-            _ = progressDialog.ShowAsync();
-
-            bool success = false;
-            bool cancelled = false;
-            try
-            {
-                success = await cloneTask;
-            }
-            catch (OperationCanceledException)
-            {
-                cancelled = true;
-                AppLogger.Warning(TAG, "用户取消了克隆");
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Error(TAG, $"克隆失败: {ex.Message}");
-                progressStatus.Text = $"克隆失败：{ex.Message}";
-            }
-            finally
-            {
-                progressDialog.Hide();
-            }
-
-            // ───── 处理结果 ─────
-            if (cancelled)
-            {
-                ShowInfoBar("提示", "克隆已取消", InfoBarSeverity.Informational);
-            }
-            else if (success)
-            {
-                AppLogger.OK(TAG, $"克隆成功: {targetDir}");
-                ShowInfoBar("成功", $"克隆成功！已保存至: {targetDir}", InfoBarSeverity.Success);
-
-                if (GitService.IsGitRepository(targetDir))
-                {
-                    AppState.CurrentRepoPath = targetDir;
-                    RepoActionsPanel.Visibility = Visibility.Collapsed;
-                    RepoNameDisplay.Text = Path.GetFileName(targetDir);
-                    RepoNameDisplay.Visibility = Visibility.Visible;
-                    UpdateCloneUI();
-                }
-            }
-            else
-            {
-                ShowInfoBar("错误", "克隆失败，请检查 URL 或网络！", InfoBarSeverity.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            AppLogger.Error(TAG, $"克隆异常: {ex.Message}");
-            ShowInfoBar("错误", $"克隆异常: {ex.Message}", InfoBarSeverity.Error);
-        }
-        finally
-        {
-            _isBusy = false;
-        }
+        // ... 已注释，内容同你当前版本
     }
 
     // ========== 克隆进度对话框 ==========
     private (ContentDialog Dialog, ProgressBar Bar, TextBlock Status) BuildCloneProgressDialog()
     {
-        var bar = new ProgressBar
-        {
-            Minimum = 0,
-            Maximum = 100,
-            Value = 0,
-            Height = 6,
-            HorizontalAlignment = HorizontalAlignment.Stretch
-        };
-
-        var status = new TextBlock
-        {
-            Text = "准备中...",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 15, 0, 0),
-            FontSize = 13,
-            Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
-        };
-
-        var panel = new StackPanel
-        {
-            Spacing = 10,
-            MinWidth = 320
-        };
-        panel.Children.Add(bar);
-        panel.Children.Add(status);
-
-        var dialog = new ContentDialog
-        {
-            Title = "克隆远程仓库",
-            Content = panel,
-            CloseButtonText = "取消",
-            DefaultButton = ContentDialogButton.None,
-            XamlRoot = this.XamlRoot
-        };
-
-        return (dialog, bar, status);
+        // ... 已注释，内容同你当前版本
     }
     */
 
