@@ -20,23 +20,23 @@ Delete them, and everything remains the same. But you will not sleep well at nig
 
 ---
 
+
 ## 🗂️ Easter Egg Index
 
 Each Easter egg has a Chinese version and an English version. English versions end with `.en.md`.
+Interactive Easter eggs (HTML) end with `.html` / `.en.html`.
 
-| Easter Egg | Chinese Version | English Version | Effect | Merit | Status |
-|---|---|---|:---:|:---:|:---:|
-| 🧘 Digital Buddha | [Buddha.md](./Buddha.md) | [Buddha.en.md](./Buddha.en.md) | Blesses code against bugs; protects `dotnet build` on the first try | +100 | ✅ Implemented |
-| 🕯️ Incense Ritual | [Incense.md](./Incense.md) | [Incense.en.md](./Incense.en.md) | Must-do before release; three sticks for a successful first try | +10 / ritual | ✅ Implemented |
-| 🪵 Digital Wooden Fish | WoodenFish.md | WoodenFish.en.md | Tap once, merit +1; eases code review anxiety | +1 / tap | 📝 Planned |
-| 🚫 Developer Taboos | Taboos.md | Taboos.en.md | Things never to do, e.g. deploy on Friday | — | 📝 Planned |
-| ✍️ Code Metaphysics · Naming | Naming.md | Naming.en.md | Never name a variable too arrogantly | — | 📝 Planned |
-| 🔮 Bug Summoning / Banishing Circle | BugSummon.md | BugSummon.en.md | Reproduce a bug, or seal it in `#if false` | −50 | 📝 Planned |
-| 🦆 Rubber Duck Debugging | RubberDuck.md | RubberDuck.en.md | Explain it to the duck, problem disappears | +3 | 📝 Planned |
-| 🎋 Fortune Draw | Fortune.md | Fortune.en.md | Decide whether to refactor today | ±? | 📝 Planned |
-| 📜 Full Release Ritual | Ritual.md | Ritual.en.md | Complete prayer flow before v1.0.0 | +66 | 📝 Planned |
-
-> Status: ✅ Implemented = document and code both ready; 📝 Planned = document pending, implementation awaits you.
+| Easter Egg | Chinese Version | English Version | Effect | Merit |
+|---|---|---|:---:|:---:|
+| 🧘 Digital Buddha | [Buddha.md](./Buddha.md) | [Buddha.en.md](./Buddha.en.md) | Blesses code against bugs; protects `dotnet build` on the first try | +100 | 
+| 🕯️ Incense Ritual | [Incense.md](./Incense.md) | [Incense.en.md](./Incense.en.md) | Must-do before release; three sticks for a successful first try | +10 / ritual |
+| 🪵 Digital Wooden Fish | [WoodenFish.md](./WoodenFish.md) · [HTML](./WoodenFish.html) | [WoodenFish.en.md](./WoodenFish.en.md) · [HTML](./WoodenFish.en.html) | Tap once, Merit +1; eases code review anxiety | +1 / tap |
+| 🚫 Developer Taboos | [Taboos.md](./Taboos.md) | [Taboos.en.md](./Taboos.en.md) | Things never to do, e.g. deploy on Friday | — |
+| ✍️ Code Metaphysics · Naming | [Naming.md](./Naming.md) | [Naming.en.md](./Naming.en.md) | Never name a variable too arrogantly | — |
+| 🔮 Bug Summoning / Banishing Circle | [BugSummon.md](./BugSummon.md) | [BugSummon.en.md](./BugSummon.en.md) | Reproduce a bug, or seal it in `#if false` | −50 | 
+| 🦆 Rubber Duck Debugging | [RubberDuck.md](./RubberDuck.md) | [RubberDuck.en.md](./RubberDuck.en.md) | Explain it to the duck, problem disappears | +3 |
+| 🎋 Fortune Draw | [Fortune.md](./Fortune.md) | [Fortune.en.md](./Fortune.en.md) | Decide whether to refactor today | ±? |
+| 📜 Full Release Ritual | [Ritual.md](./Ritual.md) | [Ritual.en.md](./Ritual.en.md) | Complete prayer flow before v1.0.0 | +66 | 
 
 
 

@@ -25,19 +25,18 @@ FluentGit 是一个严肃的、现代的、基于 WinUI 3 / Windows App SDK 的 
 
 每个彩蛋都有中文版和英文版，英文版以 `.en.md` 结尾。
 
-| 彩蛋 | 中文版 | 英文版 | 功效 | 功德值 | 状态 |
-|---|---|---|:---:|:---:|:---:|
-| 🧘 电子佛祖 | [Buddha.md](./Buddha.md) | [Buddha.en.md](./Buddha.en.md) | 保佑代码无 BUG，护佑 `dotnet build` 一次通过 | +100 | ✅ 已实现 |
-| 🕯️ 上香仪式 | [Incense.md](./Incense.md) | [Incense.en.md](./Incense.en.md) | Release 前必做，三炷香保发布一次成功 | +10 / 次 | ✅ 已实现 |
-| 🪵 电子木鱼 | WoodenFish.md | WoodenFish.en.md | 敲一下功德 +1，缓解 Code Review 焦虑 | +1 / 次 | 📝 规划中 |
-| 🚫 程序员禁忌 | Taboos.md | Taboos.en.md | 记录不可为之事，如周五下午部署 | — | 📝 规划中 |
-| ✍️ 代码玄学·命名篇 | Naming.md | Naming.en.md | 变量不可起得太嚣张，否则必被现实打脸 | — | 📝 规划中 |
-| 🔮 Bug 召唤阵 / 驱逐阵 | BugSummon.md | BugSummon.en.md | 复现疑难 Bug，或将其封印于 `#if false` | −50 | 📝 规划中 |
-| 🦆 小黄鸭调试法 | RubberDuck.md | RubberDuck.en.md | 对着鸭子讲一遍，问题自己就没了 | +3 | 📝 规划中 |
-| 🎋 求签 / 抽签 | Fortune.md | Fortune.en.md | 决定今天要不要重构 | ±? | 📝 规划中 |
-| 📜 发布仪式全流程 | Ritual.md | Ritual.en.md | v1.0.0 之前的完整祷祝流程 | +66 | 📝 规划中 |
+| 彩蛋 | 中文版 | 英文版 | 功效 | 功德值 |
+|---|---|---|:---:|:---:|
+| 🧘 电子佛祖 | [Buddha.md](./Buddha.md) | [Buddha.en.md](./Buddha.en.md) | 保佑代码无 BUG，护佑 `dotnet build` 一次通过 | +100 | 
+| 🕯️ 上香仪式 | [Incense.md](./Incense.md) | [Incense.en.md](./Incense.en.md) | Release 前必做，三炷香保发布一次成功 | +10 / 次 | 
+| 🪵 电子木鱼 | [WoodenFish.md](./WoodenFish.md) · [HTML](./WoodenFish.html) | [WoodenFish.en.md](./WoodenFish.en.md) · [HTML](./WoodenFish.en.html) | 敲一下功德 +1，缓解 Code Review 焦虑 | +1 / 次 | 
+| 🚫 程序员禁忌 | [Taboos.md](./Taboos.md) | [Taboos.en.md](./Taboos.en.md) | 记录不可为之事，如周五下午部署 | — | 
+| ✍️ 代码玄学·命名篇 | [Naming.md](./Naming.md) | [Naming.en.md](./Naming.en.md) | 变量不可起得太嚣张，否则必被现实打脸 | — | 
+| 🔮 Bug 召唤阵 / 驱逐阵 | [BugSummon.md](./BugSummon.md) | [BugSummon.en.md](./BugSummon.en.md) | 复现疑难 Bug，或将其封印于 `#if false` | −50 | 
+| 🦆 小黄鸭调试法 | [RubberDuck.md](./RubberDuck.md) | [RubberDuck.en.md](./RubberDuck.en.md) | 对着鸭子讲一遍，问题自己就没了 | +3 |
+| 🎋 求签 / 抽签 | [Fortune.md](./Fortune.md) | [Fortune.en.md](./Fortune.en.md) | 决定今天要不要重构 | ±? | 
+| 📜 发布仪式全流程 | [Ritual.md](./Ritual.md) | [Ritual.en.md](./Ritual.en.md) | v1.0.0 之前的完整祷祝流程 | +66 | 
 
-> 状态说明：✅ 已实现 = 文档与代码均已就绪；📝 规划中 = 文档待编写，实现等你来写。
 
 
 

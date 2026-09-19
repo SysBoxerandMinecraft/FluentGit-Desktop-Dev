@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Wooden Fish</title>
+<style>
+  :root {
+    --bg: #f5f3f0;
+    --fg: #1f1a15;
+    --card: #ffffff;
+    --muted: #8a8079;
+    --accent: #c47528;
+    --shadow: rgba(80, 50, 20, 0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1916;
+      --fg: #f0ebe5;
+      --card: #262220;
+      --muted: #8f857a;
+      --accent: #e39a4c;
+      --shadow: rgba(0, 0, 0, 0.5);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .container {
+    text-align: center;
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+  }
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+  }
+  .merit-display {
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 24px;
+    line-height: 1;
+  }
+  #merit {
+    font-size: 4.5rem;
+    font-weight: 200;
+    letter-spacing: -0.02em;
+    transition: transform 0.1s ease;
+  }
+  #merit.bump {
+    transform: scale(1.08);
+  }
+  .label {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-left: 10px;
+    font-weight: 400;
+  }
+  .fish-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  .fish {
+    width: 240px;
+    height: 240px;
+    transition: transform 0.09s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 12px 32px var(--shadow));
+    pointer-events: none;
+  }
+  .fish-container.hit .fish {
+    transform: scale(0.9);
+  }
+  .mallet {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    width: 90px;
+    height: 90px;
+    transform-origin: 20% 80%;
+    transition: transform 0.09s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    filter: drop-shadow(0 4px 12px var(--shadow));
+  }
+  .fish-container.hit .mallet {
+    transform: rotate(-30deg);
+  }
+  .float {
+    position: absolute;
+    pointer-events: none;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--accent);
+    animation: floatUp 0.95s ease-out forwards;
+    white-space: nowrap;
+    text-shadow: 0 2px 8px var(--shadow);
+  }
+  @keyframes floatUp {
+    0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+    20%  { opacity: 1; transform: translate(-50%, -20px) scale(1.15); }
+    100% { opacity: 0; transform: translate(-50%, -90px) scale(1); }
+  }
+  .hint {
+    margin-top: 32px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+  }
+  .hint kbd {
+    display: inline-block;
+    padding: 1px 7px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    border: 1px solid var(--muted);
+    border-radius: 4px;
+    opacity: 0.7;
+    margin: 0 2px;
+  }
+  @media (max-width: 420px) {
+    #merit { font-size: 3.5rem; }
+    .fish-container { width: 240px; height: 240px; }
+    .fish { width: 190px; height: 190px; }
+    .mallet { width: 70px; height: 70px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🪵 Digital Wooden Fish</h1>
+  <p class="subtitle">Tap once, merit +1</p>
+
+  <div class="merit-display">
+    <span id="merit">0</span><span class="label">merit</span>
+  </div>
+
+  <div class="fish-container" id="fishContainer" role="button" tabindex="0" aria-label="Wooden fish">
+    <svg class="fish" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="woodGrad" cx="38%" cy="32%" r="78%">
+          <stop offset="0%"   stop-color="#eec593"/>
+          <stop offset="45%"  stop-color="#c08550"/>
+          <stop offset="100%" stop-color="#6a3c19"/>
+        </radialGradient>
+        <radialGradient id="shine" cx="35%" cy="28%" r="45%">
+          <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="cushion" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#8a2b2b"/>
+          <stop offset="100%" stop-color="#5a1616"/>
+        </radialGradient>
+      </defs>
+
+      <!-- cushion -->
+      <ellipse cx="100" cy="176" rx="78" ry="14" fill="url(#cushion)"/>
+      <ellipse cx="100" cy="174" rx="72" ry="10" fill="#000" opacity="0.18"/>
+
+      <!-- body -->
+      <ellipse cx="100" cy="104" rx="80" ry="64" fill="url(#woodGrad)"/>
+
+      <!-- ring decoration -->
+      <ellipse cx="100" cy="104" rx="72" ry="56" fill="none" stroke="#5a3315" stroke-width="1.2" opacity="0.35"/>
+
+      <!-- mouth slit -->
+      <path d="M 40 116 Q 100 152 160 116"
+            stroke="#3a1e08" stroke-width="5"
+            fill="none" stroke-linecap="round"/>
+      <path d="M 40 116 Q 100 152 160 116"
+            stroke="#1a0d03" stroke-width="2"
+            fill="none" stroke-linecap="round" opacity="0.7"/>
+
+      <!-- side holes -->
+      <circle cx="52" cy="128" r="4.5" fill="#3a1e08"/>
+      <circle cx="148" cy="128" r="4.5" fill="#3a1e08"/>
+
+      <!-- shine -->
+      <ellipse cx="78" cy="76" rx="42" ry="26" fill="url(#shine)"/>
+
+      <!-- top stud -->
+      <circle cx="100" cy="62" r="8" fill="#3a1e08" opacity="0.55"/>
+      <circle cx="100" cy="62" r="3.5" fill="#eec593"/>
+    </svg>
+
+    <svg class="mallet" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g transform="rotate(-35 50 50)">
+        <!-- handle -->
+        <rect x="44" y="8" width="12" height="52" rx="6" fill="#7a4820"/>
+        <rect x="46" y="10" width="4" height="48" rx="2" fill="#a06535" opacity="0.7"/>
+        <!-- head -->
+        <circle cx="50" cy="66" r="20" fill="#8a5424"/>
+        <circle cx="50" cy="66" r="20" fill="none" stroke="#5a3315" stroke-width="1.5"/>
+        <ellipse cx="44" cy="60" rx="8" ry="5" fill="#c08550" opacity="0.7"/>
+      </g>
+    </svg>
+  </div>
+
+  <p class="hint">Click the fish · or press <kbd>Space</kbd></p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Merit. The whole project uses this name consistently.
+  // Merit cannot be exchanged for anything.
+  var merit = 0;
+  var meritEl = document.getElementById("merit");
+  var container = document.getElementById("fishContainer");
+  var audioCtx = null;
+
+  function getCtx() {
+    if (!audioCtx) {
+      var Ctor = window.AudioContext || window.webkitAudioContext;
+      if (!Ctor) return null;
+      audioCtx = new Ctor();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  function playKnock() {
+    try {
+      var ctx = getCtx();
+      if (!ctx) return;
+      var now = ctx.currentTime;
+
+      var master = ctx.createGain();
+      master.gain.setValueAtTime(0.28, now);
+      master.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      master.connect(ctx.destination);
+
+      var osc1 = ctx.createOscillator();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(360, now);
+      osc1.frequency.exponentialRampToValueAtTime(95, now + 0.16);
+
+      var osc2 = ctx.createOscillator();
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(180, now);
+      osc2.frequency.exponentialRampToValueAtTime(55, now + 0.16);
+
+      var osc3 = ctx.createOscillator();
+      osc3.type = "sine";
+      osc3.frequency.setValueAtTime(640, now);
+      osc3.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+
+      var g3 = ctx.createGain();
+      g3.gain.setValueAtTime(0.12, now);
+      g3.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+      osc1.connect(master);
+      osc2.connect(master);
+      osc3.connect(g3);
+      g3.connect(master);
+
+      osc1.start(now); osc2.start(now); osc3.start(now);
+      osc1.stop(now + 0.24); osc2.stop(now + 0.24); osc3.stop(now + 0.1);
+    } catch (e) {
+      // If the sound fails, the tap still counts. Merit stands.
+    }
+  }
+
+  function spawnFloat(x, y) {
+    var span = document.createElement("span");
+    span.className = "float";
+    span.textContent = "+1 merit";
+    span.style.left = x + "px";
+    span.style.top = y + "px";
+    container.appendChild(span);
+    setTimeout(function () {
+      if (span.parentNode) span.parentNode.removeChild(span);
+    }, 950);
+  }
+
+  function bumpMerit() {
+    meritEl.classList.add("bump");
+    setTimeout(function () { meritEl.classList.remove("bump"); }, 110);
+  }
+
+  function knock(clientX, clientY) {
+    merit += 1;
+    meritEl.textContent = String(merit);
+    bumpMerit();
+    playKnock();
+
+    var rect = container.getBoundingClientRect();
+    var x, y;
+    if (typeof clientX === "number" && typeof clientY === "number") {
+      x = clientX - rect.left;
+      y = clientY - rect.top;
+    } else {
+      x = rect.width / 2;
+      y = rect.height / 2;
+    }
+    spawnFloat(x, y);
+
+    container.classList.add("hit");
+    setTimeout(function () { container.classList.remove("hit"); }, 95);
+
+    // Every 108 taps, a gentle reminder.
+    // Not a milestone. Just "go look at the code".
+    if (merit % 108 === 0) {
+      setTimeout(function () {
+        alert("Merit " + merit + ".\n\nYou have tapped " + merit + " times.\nGo read the code.");
+      }, 200);
+    }
+  }
+
+  container.addEventListener("click", function (e) {
+    knock(e.clientX, e.clientY);
+  });
+
+  container.addEventListener("touchstart", function (e) {
+    if (e.touches.length > 0) {
+      var t = e.touches[0];
+      knock(t.clientX, t.clientY);
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.code === "Space" || e.key === " ") {
+      e.preventDefault();
+      knock();
+    }
+  });
+
+  window.addEventListener("keyup", function (e) {
+    if (e.code === "Space" || e.key === " ") {
+      e.preventDefault();
+    }
+  });
+})();
+</script>
+</body>
+</html>
