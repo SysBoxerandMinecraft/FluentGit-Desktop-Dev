@@ -17,7 +17,8 @@ public static partial class GitService
         try
         {
             AppLogger.Info(TAG, $"获取仓库状态: {repoPath}");
-            var (code, output, error) = RunGit(gitExePath, "status --porcelain", repoPath);
+            var (code, output, error) = RunGit(
+                gitExePath, new[] { "status", "--porcelain" }, repoPath);
 
             if (code != 0)
             {
@@ -29,12 +30,13 @@ public static partial class GitService
             var entries = new List<GitStatusEntry>();
             foreach (var line in lines)
             {
-                if (line.Length < 3) continue;
+                // porcelain v1 格式：XY<space>PATH
+                if (line.Length < 4) continue;
                 entries.Add(new GitStatusEntry
                 {
                     X = line[0],
                     Y = line[1],
-                    Path = line[3..].Trim()
+                    Path = line[3..]
                 });
             }
 

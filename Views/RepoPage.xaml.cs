@@ -199,7 +199,7 @@ public sealed partial class RepoPage : Page
             string repoPath = folder.Path;
             if (GitService.IsGitRepository(repoPath))
             {
-                AppState.CurrentRepoPath = repoPath;
+                AppState.SetRepository(repoPath);
                 RepoActionsPanel.Visibility = Visibility.Collapsed;
                 RepoNameDisplay.Text = Path.GetFileName(repoPath);
                 RepoNameDisplay.Visibility = Visibility.Visible;

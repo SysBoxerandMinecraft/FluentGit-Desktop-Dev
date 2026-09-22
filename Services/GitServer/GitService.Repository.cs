@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -10,6 +11,9 @@ public static partial class GitService
     // 当前正在执行的克隆进程（用于取消）
     private static System.Diagnostics.Process? _currentCloneProcess;
     private static readonly object _cloneProcessLock = new();
+
+    // 保证同一时刻只有一个克隆任务，避免静态引用互相踩
+    private static readonly SemaphoreSlim _cloneSemaphore = new(1, 1);
 
     // ========== 初始化仓库 ==========
     public static bool InitRepository(string gitExePath, string workingDirectory)
@@ -22,7 +26,7 @@ public static partial class GitService
         try
         {
             AppLogger.Info(TAG, $"开始 git init: {workingDirectory}");
-            var (code, output, error) = RunGit(gitExePath, "init", workingDirectory);
+            var (code, _, error) = RunGit(gitExePath, new[] { "init" }, workingDirectory);
 
             if (code == 0)
             {
@@ -33,7 +37,7 @@ public static partial class GitService
             AppLogger.Error(TAG, $"git init 失败: {error}");
             throw new Exception($"Git init 失败: {error}");
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not FileNotFoundException && ex is not DirectoryNotFoundException)
         {
             AppLogger.Error(TAG, $"git init 异常: {ex.Message}");
             throw new Exception($"执行 git init 异常: {ex.Message}");
@@ -54,8 +58,10 @@ public static partial class GitService
         try
         {
             AppLogger.Info(TAG, $"开始 git clone: {remoteUrl} → {targetDirectory}");
-            var args = $"clone \"{remoteUrl}\" \"{targetDirectory}\"";
-            var (code, output, error) = RunGit(gitExePath, args, Directory.GetCurrentDirectory());
+            var (code, _, error) = RunGit(
+                gitExePath,
+                new[] { "clone", remoteUrl, targetDirectory },
+                Directory.GetCurrentDirectory());
 
             if (code == 0)
             {
@@ -89,17 +95,27 @@ public static partial class GitService
             throw new Exception("目标目录非空，请选择空目录或指定新目录");
         }
 
+        // 同一时刻只允许一个克隆
+        _cloneSemaphore.Wait(token);
         try
         {
             AppLogger.Info(TAG, $"开始 git clone (带进度): {remoteUrl} → {targetDirectory}");
 
             var process = new System.Diagnostics.Process();
-            process.StartInfo.FileName = gitExePath;
-            process.StartInfo.Arguments = $"clone --progress \"{remoteUrl}\" \"{targetDirectory}\"";
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.CreateNoWindow = true;
+            var psi = new System.Diagnostics.ProcessStartInfo(gitExePath)
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
+            };
+            psi.ArgumentList.Add("clone");
+            psi.ArgumentList.Add("--progress");
+            psi.ArgumentList.Add(remoteUrl);
+            psi.ArgumentList.Add(targetDirectory);
+            process.StartInfo = psi;
 
             process.OutputDataReceived += (_, e) =>
             {
@@ -175,6 +191,10 @@ public static partial class GitService
             AppLogger.Error(TAG, $"git clone 异常: {ex.Message}");
             throw new Exception($"执行 git clone 异常: {ex.Message}");
         }
+        finally
+        {
+            _cloneSemaphore.Release();
+        }
     }
 
     // ========== 解析 git 进度输出 ==========
@@ -212,34 +232,6 @@ public static partial class GitService
         onProgress(mappedPercent, $"{phase}... {mappedPercent}%");
     }
 
-    // ========== 杀掉残留的 git 进程 ==========
-    public static void KillLingeringGitProcesses()
-    {
-        string[] processNames = {
-            "git", "git-remote-https", "git-remote-http",
-            "git-remote-ssh", "git-remote-gcrypt", "git-lfs"
-        };
-
-        foreach (var name in processNames)
-        {
-            try
-            {
-                var procs = System.Diagnostics.Process.GetProcessesByName(name);
-                foreach (var p in procs)
-                {
-                    try
-                    {
-                        p.Kill();
-                        p.WaitForExit(1000);
-                        AppLogger.Info(TAG, $"已杀掉残留进程: {name} (PID={p.Id})");
-                    }
-                    catch { }
-                }
-            }
-            catch { }
-        }
-    }
-
     // ========== 强制删除目录（处理临时文件锁定） ==========
     public static bool ForceDeleteDirectory(string path, int maxRetries = 5)
     {
@@ -263,7 +255,7 @@ public static partial class GitService
             {
                 AppLogger.Warning(TAG, $"删除目录失败 (第 {attempt}/{maxRetries} 次): {ex.Message}");
                 if (attempt < maxRetries)
-                    System.Threading.Thread.Sleep(500);
+                    Thread.Sleep(500);
             }
         }
         return false;

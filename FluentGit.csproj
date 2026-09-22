@@ -61,12 +61,6 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="0.6.1" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Assets\AppIcon.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  <!-- 其他 Assets 项也可以同样处理，但至少保证 AppIcon.ico -->
-  </ItemGroup>
 
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
@@ -82,6 +76,5 @@
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
   </PropertyGroup>
 </Project>

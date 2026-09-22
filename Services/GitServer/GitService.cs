@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 namespace FluentGit.Services;
 
@@ -27,19 +29,8 @@ public static partial class GitService
     {
         try
         {
-            var process = new Process();
-            process.StartInfo.FileName = gitExePath;
-            process.StartInfo.Arguments = "remote";
-            process.StartInfo.WorkingDirectory = repoPath;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.CreateNoWindow = true;
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd().Trim();
-            process.WaitForExit();
-
-            bool hasRemote = process.ExitCode == 0 && !string.IsNullOrEmpty(output);
+            var (code, output, _) = RunGit(gitExePath, new[] { "remote" }, repoPath);
+            bool hasRemote = code == 0 && !string.IsNullOrWhiteSpace(output);
             AppLogger.Info(TAG, $"HasRemote: {hasRemote} ({repoPath})");
             return hasRemote;
         }
@@ -51,18 +42,28 @@ public static partial class GitService
     }
 
     // ========== 通用：执行 git 命令并返回结果 ==========
+    // 使用 ArgumentList，避免命令拼接带来的转义 / 注入问题
     private static (int ExitCode, string Output, string Error) RunGit(
-        string gitExePath, string arguments, string workingDirectory)
+        string gitExePath,
+        IEnumerable<string> args,
+        string workingDirectory)
     {
-        var process = new Process();
-        process.StartInfo.FileName = gitExePath;
-        process.StartInfo.Arguments = arguments;
-        process.StartInfo.WorkingDirectory = workingDirectory;
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.RedirectStandardOutput = true;
-        process.StartInfo.RedirectStandardError = true;
-        process.StartInfo.CreateNoWindow = true;
+        var psi = new ProcessStartInfo(gitExePath)
+        {
+            WorkingDirectory = workingDirectory,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
+        };
+        foreach (var a in args)
+            psi.ArgumentList.Add(a);
+
+        using var process = new Process { StartInfo = psi };
         process.Start();
+
         string output = process.StandardOutput.ReadToEnd();
         string error = process.StandardError.ReadToEnd();
         process.WaitForExit();

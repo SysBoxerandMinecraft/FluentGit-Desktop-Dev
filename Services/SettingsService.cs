@@ -9,11 +9,13 @@ public class AppSettings
     public string? GitPath { get; set; }
     public string? GitHash { get; set; }
     public string? AppTheme { get; set; }
-    public bool FilterBuildArtifacts { get; set; } = true;   // ★ 新增，默认开启
+    public bool FilterBuildArtifacts { get; set; } = true;
 }
 
 public static class SettingsService
 {
+    private const string TAG = "SettingsService";
+
     private static readonly string _settingsPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "FluentGit",
@@ -22,9 +24,16 @@ public static class SettingsService
 
     static SettingsService()
     {
-        var dir = Path.GetDirectoryName(_settingsPath);
-        if (!Directory.Exists(dir))
-            Directory.CreateDirectory(dir!);
+        try
+        {
+            var dir = Path.GetDirectoryName(_settingsPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(TAG, $"创建设置目录失败: {ex.Message}");
+        }
     }
 
     public static AppSettings Load()
@@ -37,7 +46,10 @@ public static class SettingsService
                 return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppLogger.Error(TAG, $"读取设置失败: {ex.Message}");
+        }
         return new AppSettings();
     }
 
@@ -46,8 +58,15 @@ public static class SettingsService
         try
         {
             string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_settingsPath, json);
+
+            // 原子写入：先写临时文件，再替换
+            string tmp = _settingsPath + ".tmp";
+            File.WriteAllText(tmp, json);
+            File.Replace(tmp, _settingsPath, null, ignoreMetadataErrors: true);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppLogger.Error(TAG, $"保存设置失败: {ex.Message}");
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Microsoft.UI.Xaml;
 using System;
-using System.Diagnostics;
+using FluentGit.Services;
 
 namespace FluentGit;
 
@@ -13,36 +13,45 @@ public partial class App : Application
     {
         InitializeComponent();
 
-        // ★ 捕获 UI 线程未处理异常
-        this.UnhandledException += OnUnhandledException;
+        // UI 线程未处理异常
+        UnhandledException += OnUnhandledException;
 
-        // ★ 捕获后台任务未处理异常
-        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        // 后台线程未处理异常（通常意味着进程即将终止，只能记录）
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
-            Debug.WriteLine($"[AppDomain] {e.ExceptionObject}");
+            CrashLogger.Log("AppDomain", e.ExceptionObject as Exception);
         };
 
-        // ★ 捕获 Task 里的未处理异常
-        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (s, e) =>
+        // Task 未观察异常（吞掉，避免进程被提升为致命异常）
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, e) =>
         {
-            Debug.WriteLine($"[Task] {e.Exception}");
+            CrashLogger.Log("TaskScheduler", e.Exception);
             e.SetObserved();
         };
     }
 
     private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
-        Debug.WriteLine("========== UnhandledException ==========");
-        Debug.WriteLine(e.Message);
-        Debug.WriteLine(e.Exception?.ToString());
-        Debug.WriteLine("========================================");
-        // 暂不设置 e.Handled = true，让调试器能抓到
+        CrashLogger.Log("UI", e.Exception);
+        AppLogger.Error("App", $"未处理异常: {e.Message}");
+
+        // 对真正无法恢复的异常，让进程去死
+        // 其余（UI 事件处理器里的 async void 抛出等）标记为已处理，避免整个应用崩掉
+        if (e.Exception is OutOfMemoryException or StackOverflowException)
+        {
+            e.Handled = false;
+        }
+        else
+        {
+            e.Handled = true;
+        }
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _window = new MainWindow();
-        MainWindow = _window as MainWindow;
-        _window.Activate();
+        var window = new MainWindow();
+        MainWindow = window;
+        _window = window;
+        window.Activate();
     }
 }

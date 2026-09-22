@@ -1,5 +1,4 @@
 using FluentGit.Services;
-using Microsoft.UI.Xaml.Media;   // ★ 加这行
 using FluentGit.Views;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
@@ -8,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.IO;
 using System.Reflection;
+using Microsoft.UI.Xaml.Media;  
 
 namespace FluentGit;
 
@@ -51,7 +51,15 @@ public sealed partial class MainWindow : Window
         string iconPath = Path.Combine(appDir, "Assets", "AppIcon.ico");
         AppWindow.SetIcon(iconPath);
 
-        NavFrame.RequestedTheme = ElementTheme.Default;
+        // 主题：从设置读
+        ApplyThemeFromSettings();
+
+        // 返回按钮可见性：Frame.CanGoBack 不是依赖属性，x:Bind 不生效，手动维护
+        NavFrame.Navigated += (_, _) =>
+        {
+            AppTitleBar.IsBackButtonVisible = NavFrame.CanGoBack;
+        };
+
         NavFrame.Navigate(typeof(RepoPage));
     }
 
@@ -74,6 +82,30 @@ public sealed partial class MainWindow : Window
         catch (Exception ex)
         {
             AppLogger.Error(TAG, $"InitializeBackdrop 异常: {ex.Message}");
+        }
+    }
+
+    // ========== 主题 ==========
+    private void ApplyThemeFromSettings()
+    {
+        try
+        {
+            var settings = SettingsService.Load();
+            var theme = settings.AppTheme switch
+            {
+                "Dark"  => ElementTheme.Dark,
+                "Light" => ElementTheme.Light,
+                _       => ElementTheme.Default
+            };
+
+            if (Content is FrameworkElement root)
+                root.RequestedTheme = theme;
+
+            AppLogger.Info(TAG, $"主题已应用: {theme}");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(TAG, $"ApplyThemeFromSettings 异常: {ex.Message}");
         }
     }
 
@@ -106,7 +138,8 @@ public sealed partial class MainWindow : Window
                     NavFrame.Navigate(typeof(SettingsPage));
                     break;
                 default:
-                    throw new InvalidOperationException($"Unknown navigation item tag: {item.Tag}");
+                    AppLogger.Warning(TAG, $"未知导航项: {item.Tag}");
+                    break;
             }
         }
     }

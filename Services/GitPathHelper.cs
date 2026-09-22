@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -11,21 +11,13 @@ namespace FluentGit.Services
     {
         private const string TAG = "GitPathHelper";
 
-        // 保留常量（兼容旧代码），签名验证下不再使用
-        public const string ExpectedGitHash = "";
+        // 签名验证缓存：路径 → (最后写入时间, 是否有效)
+        private static readonly ConcurrentDictionary<string, (DateTime LastWrite, bool Valid)> _sigCache = new();
 
         // 支持的 Git 相关 exe 文件名
         public static readonly string[] AcceptedGitExecutables =
         {
             "git.exe", "git-bash.exe", "git-cmd.exe", "sh.exe", "bash.exe"
-        };
-
-        // Git for Windows 官方签名者关键字
-        private static readonly string[] TrustedSignerKeywords =
-        {
-            "Johannes Schindelin",
-            "Git for Windows",
-            "Open Source Developer"
         };
 
         // ========== 主入口：自动查找 ==========
@@ -85,23 +77,40 @@ namespace FluentGit.Services
             return ValidateGitSignature(gitPath);
         }
 
-        /// <summary>
-        /// 验证文件是否由 Git for Windows 官方签名
-        /// 分两步：
-        /// 1. WinVerifyTrust 验证签名有效性（不联网）
-        /// 2. 读取签名者 Subject，确认是 Git for Windows 官方
-        /// </summary>
-        /// <summary>
-        /// 验证文件是否由 Git for Windows 官方签名
-        /// 分两步：
-        /// 1. WinVerifyTrust 验证签名有效性（不联网）
-        /// 2. 读取签名者 Subject，确认签名者是 Johannes Schindelin
-        /// </summary>
+        // ========== 签名验证（带缓存） ==========
         private static bool ValidateGitSignature(string exePath)
         {
             try
             {
-                // Step 1: 文件名必须在白名单
+                var lastWrite = File.GetLastWriteTimeUtc(exePath);
+                if (_sigCache.TryGetValue(exePath, out var cached) && cached.LastWrite == lastWrite)
+                {
+                    return cached.Valid;
+                }
+
+                bool valid = ValidateGitSignatureCore(exePath);
+                _sigCache[exePath] = (lastWrite, valid);
+                return valid;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(TAG, $"ValidateGitSignature 异常: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 验证文件是否由 Git for Windows 官方签名
+        /// 分三步：
+        /// 1. 文件名必须在白名单
+        /// 2. WinVerifyTrust 验证签名有效性（不联网）
+        /// 3. 读取签名者 Subject，确认是 Johannes Schindelin
+        /// </summary>
+        private static bool ValidateGitSignatureCore(string exePath)
+        {
+            try
+            {
+                // Step 1: 文件名白名单
                 string fileName = Path.GetFileName(exePath);
                 bool acceptedName = false;
                 foreach (var accepted in AcceptedGitExecutables)
@@ -118,7 +127,7 @@ namespace FluentGit.Services
                     return false;
                 }
 
-                // Step 2: 用 WinVerifyTrust 验证签名有效性
+                // Step 2: WinVerifyTrust
                 if (!WinVerifyTrustCheck(exePath))
                 {
                     AppLogger.Warning(TAG, $"WinVerifyTrust 验证失败: {exePath}");
@@ -126,7 +135,7 @@ namespace FluentGit.Services
                 }
                 AppLogger.OK(TAG, $"WinVerifyTrust 通过: {fileName}");
 
-                // Step 3: 确认签名者就是 Johannes Schindelin
+                // Step 3: 签名者 Subject 必须包含 Johannes Schindelin
                 string subject = GetSignerSubject(exePath);
                 if (string.IsNullOrEmpty(subject))
                 {
@@ -145,12 +154,12 @@ namespace FluentGit.Services
             }
             catch (Exception ex)
             {
-                AppLogger.Error(TAG, $"ValidateGitSignature 异常: {ex.Message}");
+                AppLogger.Error(TAG, $"ValidateGitSignatureCore 异常: {ex.Message}");
                 return false;
             }
         }
 
-        // ========== WinVerifyTrust（不联网的签名验证） ==========
+        // ========== WinVerifyTrust ==========
         private static readonly Guid WINTRUST_ACTION_GENERIC_VERIFY_V2 =
             new Guid("00AAC56B-CD44-11d0-8CC2-00C04FC295EE");
 
@@ -207,17 +216,17 @@ namespace FluentGit.Services
                 {
                     cbStruct = (uint)Marshal.SizeOf<WINTRUST_DATA>(),
                     dwUIChoice = 2,            // WTD_UI_NONE
-                    fdwRevocationChecks = 0,   // WTD_REVOKE_NONE - 不做吊销检查（关键！）
+                    fdwRevocationChecks = 0,   // WTD_REVOKE_NONE
                     dwUnionChoice = 1,         // WTD_CHOICE_FILE
                     pFile = pFileInfo,
                     dwStateAction = 0,         // WTD_STATEACTION_IGNORE
-                    dwProvFlags = 0x00000010   // WTD_CACHE_ONLY_URL_RETRIEVAL - 不联网
+                    dwProvFlags = 0x00000010   // WTD_CACHE_ONLY_URL_RETRIEVAL
                 };
                 pWvtData = Marshal.AllocHGlobal(Marshal.SizeOf<WINTRUST_DATA>());
                 Marshal.StructureToPtr(wvtData, pWvtData, false);
 
                 uint result = WinVerifyTrust(IntPtr.Zero, WINTRUST_ACTION_GENERIC_VERIFY_V2, pWvtData);
-                return result == 0;  // ERROR_SUCCESS
+                return result == 0;
             }
             catch
             {
@@ -385,12 +394,6 @@ namespace FluentGit.Services
                 }
             }
             catch { }
-            return null;
-        }
-
-        // ========== 兼容旧接口 ==========
-        public static string? ComputeFileHash(string filePath)
-        {
             return null;
         }
     }

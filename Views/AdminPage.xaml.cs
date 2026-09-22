@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using FluentGit.Services;
 using Windows.ApplicationModel.DataTransfer;
 
@@ -28,7 +29,9 @@ public sealed partial class AdminPage : Page
     private const int MaxTreeNodes = 800;
     private static readonly ConcurrentDictionary<string, ImageSource> _iconCache = new();
 
-    // ★ 全语言通用过滤清单
+    // 当前生效的过滤列表（每次加载目录树前刷新一次）
+    private string[] _activeSkipFolders = new[] { ".git" };
+
     private static readonly string[] SkipFolders =
     {
         ".git", ".svn", ".hg",
@@ -53,6 +56,10 @@ public sealed partial class AdminPage : Page
 
     private DateTime _lastClickTime = DateTime.MinValue;
     private string? _lastClickedPath = null;
+
+    // 系统双击时间（毫秒）
+    [DllImport("user32.dll")]
+    private static extern uint GetDoubleClickTime();
 
     public AdminPage()
     {
@@ -123,6 +130,9 @@ public sealed partial class AdminPage : Page
         AppLogger.Info(TAG, $"开始加载目录树: {rootPath}");
         var sw = Stopwatch.StartNew();
 
+        // 只在加载前读一次设置
+        _activeSkipFolders = GetActiveSkipFolders();
+
         _treeNodeCount = 0;
         DirectoryTreeView.RootNodes.Clear();
 
@@ -162,7 +172,7 @@ public sealed partial class AdminPage : Page
     {
         if (depth >= maxDepth || _treeNodeCount >= MaxTreeNodes) return;
 
-        var skipFolders = GetActiveSkipFolders();
+        var skipFolders = _activeSkipFolders;
 
         try
         {
@@ -224,7 +234,7 @@ public sealed partial class AdminPage : Page
 
         var now = DateTime.Now;
         bool isDoubleClick =
-            (now - _lastClickTime).TotalMilliseconds < 400 &&
+            (now - _lastClickTime).TotalMilliseconds < GetDoubleClickTime() &&
             model.FullPath == _lastClickedPath;
 
         _lastClickTime = now;
@@ -242,103 +252,89 @@ public sealed partial class AdminPage : Page
         var element = e.OriginalSource as FrameworkElement;
         if (element == null) return;
 
-        // 向上找 TreeViewItem
         var tvi = FindAncestor<TreeViewItem>(element);
         if (tvi == null) return;
 
-        // 从容器拿 TreeViewNode，再拿 TreeItemModel
         var node = DirectoryTreeView.NodeFromContainer(tvi);
         if (node?.Content is not TreeItemModel model) return;
 
-        // 顺手选中
         DirectoryTreeView.SelectedNode = node;
 
-        // 构建菜单
         var menu = BuildContextMenu(model);
-
-        // 显示
         menu.ShowAt(element, e.GetPosition(element));
         e.Handled = true;
     }
 
     private MenuFlyout BuildContextMenu(TreeItemModel model)
-{
-    var menu = new MenuFlyout();
-
-    if (model.IsFile)
     {
-        // 文件：打开
-        var openItem = new MenuFlyoutItem
-        {
-            Text = "打开",
-            Icon = new SymbolIcon(Symbol.OpenFile)
-        };
-        openItem.Click += (_, _) => OpenFile(model.FullPath);
-        menu.Items.Add(openItem);
+        var menu = new MenuFlyout();
 
-        // ★ 删掉了「用其他程序打开...」
+        if (model.IsFile)
+        {
+            var openItem = new MenuFlyoutItem
+            {
+                Text = "打开",
+                Icon = new SymbolIcon(Symbol.OpenFile)
+            };
+            openItem.Click += (_, _) => OpenFile(model.FullPath);
+            menu.Items.Add(openItem);
+        }
+        else
+        {
+            var terminalItem = new MenuFlyoutItem
+            {
+                Text = "在终端中打开",
+                Icon = new FontIcon { Glyph = "\uE756" }
+            };
+            terminalItem.Click += (_, _) => OpenTerminal(model.FullPath);
+            menu.Items.Add(terminalItem);
+
+            var explorerItem = new MenuFlyoutItem
+            {
+                Text = "在文件资源管理器中打开",
+                Icon = new SymbolIcon(Symbol.Folder)
+            };
+            explorerItem.Click += (_, _) => OpenExplorer(model.FullPath);
+            menu.Items.Add(explorerItem);
+        }
+
+        menu.Items.Add(new MenuFlyoutSeparator());
+
+        var copyPathItem = new MenuFlyoutItem
+        {
+            Text = "复制完整路径",
+            Icon = new SymbolIcon(Symbol.Copy)
+        };
+        copyPathItem.Click += (_, _) => CopyToClipboard(model.FullPath);
+        menu.Items.Add(copyPathItem);
+
+        var copyNameItem = new MenuFlyoutItem
+        {
+            Text = "复制名称",
+            Icon = new SymbolIcon(Symbol.Copy)
+        };
+        copyNameItem.Click += (_, _) => CopyToClipboard(model.Name);
+        menu.Items.Add(copyNameItem);
+
+        menu.Items.Add(new MenuFlyoutSeparator());
+
+        var refreshItem = new MenuFlyoutItem
+        {
+            Text = "刷新目录树",
+            Icon = new SymbolIcon(Symbol.Refresh)
+        };
+        refreshItem.Click += (_, _) =>
+        {
+            var repo = AppState.CurrentRepoPath;
+            if (!string.IsNullOrEmpty(repo))
+                LoadDirectoryTree(repo);
+        };
+        menu.Items.Add(refreshItem);
+
+        return menu;
     }
-    else
-    {
-        // 文件夹：在终端打开、在资源管理器打开
-        var terminalItem = new MenuFlyoutItem
-        {
-            Text = "在终端中打开",
-            Icon = new FontIcon { Glyph = "\uE756" }
-        };
-        terminalItem.Click += (_, _) => OpenTerminal(model.FullPath);
-        menu.Items.Add(terminalItem);
-
-        var explorerItem = new MenuFlyoutItem
-        {
-            Text = "在文件资源管理器中打开",
-            Icon = new SymbolIcon(Symbol.Folder)
-        };
-        explorerItem.Click += (_, _) => OpenExplorer(model.FullPath);
-        menu.Items.Add(explorerItem);
-    }
-
-    menu.Items.Add(new MenuFlyoutSeparator());
-
-    // 复制路径
-    var copyPathItem = new MenuFlyoutItem
-    {
-        Text = "复制完整路径",
-        Icon = new SymbolIcon(Symbol.Copy)
-    };
-    copyPathItem.Click += (_, _) => CopyToClipboard(model.FullPath);
-    menu.Items.Add(copyPathItem);
-
-    // 复制名称
-    var copyNameItem = new MenuFlyoutItem
-    {
-        Text = "复制名称",
-        Icon = new SymbolIcon(Symbol.Copy)
-    };
-    copyNameItem.Click += (_, _) => CopyToClipboard(model.Name);
-    menu.Items.Add(copyNameItem);
-
-    menu.Items.Add(new MenuFlyoutSeparator());
-
-    // 刷新
-    var refreshItem = new MenuFlyoutItem
-    {
-        Text = "刷新目录树",
-        Icon = new SymbolIcon(Symbol.Refresh)
-    };
-    refreshItem.Click += (_, _) =>
-    {
-        var repo = AppState.CurrentRepoPath;
-        if (!string.IsNullOrEmpty(repo))
-            LoadDirectoryTree(repo);
-    };
-    menu.Items.Add(refreshItem);
-
-    return menu;
-}
 
     // ========== 右键菜单具体动作 ==========
-
     private void OpenFile(string path)
     {
         try
@@ -363,7 +359,6 @@ public sealed partial class AdminPage : Page
         {
             if (!Directory.Exists(folderPath)) return;
 
-            // 优先 Windows Terminal
             string wtPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 @"Microsoft\WindowsApps\wt.exe");
@@ -380,7 +375,6 @@ public sealed partial class AdminPage : Page
             }
             else
             {
-                // 回退到 cmd
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "cmd.exe",
@@ -431,7 +425,6 @@ public sealed partial class AdminPage : Page
     }
 
     // ========== 工具方法 ==========
-
     private static T? FindAncestor<T>(DependencyObject? obj) where T : DependencyObject
     {
         var cur = obj;

@@ -26,7 +26,7 @@ public static partial class GitService
         try
         {
             AppLogger.Info(TAG, $"开始 git pull: {repoPath}");
-            var (code, output, error) = RunGit(gitExePath, "pull", repoPath);
+            var (code, output, error) = RunGit(gitExePath, new[] { "pull" }, repoPath);
 
             string combined = output + "\n" + error;
 
@@ -97,7 +97,7 @@ public static partial class GitService
         try
         {
             AppLogger.Info(TAG, $"开始 git fetch --all: {repoPath}");
-            var (code, output, error) = RunGit(gitExePath, "fetch --all", repoPath);
+            var (code, output, error) = RunGit(gitExePath, new[] { "fetch", "--all" }, repoPath);
 
             string combined = output + "\n" + error;
 

@@ -16,7 +16,7 @@ public static partial class GitService
         try
         {
             AppLogger.Info(TAG, $"开始 git add -A: {repoPath}");
-            var (code, output, error) = RunGit(gitExePath, "add -A", repoPath);
+            var (code, _, error) = RunGit(gitExePath, new[] { "add", "-A" }, repoPath);
 
             if (code == 0)
             {
@@ -48,9 +48,9 @@ public static partial class GitService
         {
             AppLogger.Info(TAG, $"开始 git commit: {message}");
 
-            string safeMessage = message.Replace("\"", "\\\"");
-            var args = $"commit -m \"{safeMessage}\"";
-            var (code, output, error) = RunGit(gitExePath, args, repoPath);
+            // 直接传字符串，由 ArgumentList 负责转义
+            var (code, output, error) = RunGit(
+                gitExePath, new[] { "commit", "-m", message }, repoPath);
 
             string combined = output + "\n" + error;
 

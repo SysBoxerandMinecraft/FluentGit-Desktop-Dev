@@ -19,7 +19,7 @@ public static partial class GitService
         {
             AppLogger.Info(TAG, $"获取分支列表: {repoPath}");
             var (code, output, error) = RunGit(
-                gitExePath, "branch --format=%(refname:short)", repoPath);
+                gitExePath, new[] { "branch", "--format=%(refname:short)" }, repoPath);
 
             if (code != 0)
             {

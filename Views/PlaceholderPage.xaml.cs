@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using FluentGit.Services;
 using Windows.UI.ViewManagement;
 
 namespace FluentGit.Views;
@@ -24,44 +25,53 @@ public sealed partial class PlaceholderPage : Page
             TitleText.Text = title;
 
         _isUpdating = true;
-        var frame = this.Frame;   // ★ 改这里
-        if (frame != null)
-        {
-            ThemeToggle.IsOn = (frame.RequestedTheme == ElementTheme.Dark);
-        }
-        FollowSystemCheckBox.IsChecked = false;
+
+        var settings = SettingsService.Load();
+        var isDark = settings.AppTheme == "Dark";
+        ThemeToggle.IsOn = isDark;
+        FollowSystemCheckBox.IsChecked = string.IsNullOrEmpty(settings.AppTheme);
+
         _isUpdating = false;
     }
 
     private void OnThemeToggled(object sender, RoutedEventArgs e)
     {
         if (_isUpdating) return;
-        var frame = this.Frame;   // ★ 改这里
-        if (frame == null) return;
 
         var newTheme = ThemeToggle.IsOn ? ElementTheme.Dark : ElementTheme.Light;
-        if (frame.RequestedTheme != newTheme)
-            frame.RequestedTheme = newTheme;
+        ApplyTheme(newTheme);
+
+        // 手动切换主题时，取消「跟随系统」
+        _isUpdating = true;
+        FollowSystemCheckBox.IsChecked = false;
+        _isUpdating = false;
+
+        var settings = SettingsService.Load();
+        settings.AppTheme = newTheme.ToString();
+        SettingsService.Save(settings);
     }
 
     private void OnFollowSystemChecked(object sender, RoutedEventArgs e)
     {
         if (_isUpdating) return;
-        var frame = this.Frame;   // ★ 改这里
-        if (frame == null) return;
 
-        bool systemIsDark = IsSystemDarkTheme();
-        var newTheme = systemIsDark ? ElementTheme.Dark : ElementTheme.Light;
-        if (frame.RequestedTheme != newTheme)
-        {
-            _isUpdating = true;
-            frame.RequestedTheme = newTheme;
-            ThemeToggle.IsOn = systemIsDark;
-            _isUpdating = false;
-        }
+        ApplyTheme(ElementTheme.Default);
+
+        var settings = SettingsService.Load();
+        settings.AppTheme = null;   // null = 跟随系统
+        SettingsService.Save(settings);
     }
 
     private void OnFollowSystemUnchecked(object sender, RoutedEventArgs e) { }
+
+    private void ApplyTheme(ElementTheme theme)
+    {
+        // 作用于窗口根元素，所有 Frame 都会继承
+        if (App.MainWindow?.Content is FrameworkElement root)
+        {
+            root.RequestedTheme = theme;
+        }
+    }
 
     private bool IsSystemDarkTheme()
     {

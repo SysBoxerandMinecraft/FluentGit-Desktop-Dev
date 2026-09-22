@@ -10,8 +10,6 @@ namespace FluentGit.Services.Search;
 /// </summary>
 public static class SearchService
 {
-    private const string TAG = "SearchService";
-
     /// <summary>
     /// 判断单个搜索项是否匹配 query
     /// </summary>
@@ -20,11 +18,9 @@ public static class SearchService
         if (entry == null) return false;
         if (string.IsNullOrWhiteSpace(query)) return true;
 
-        // 1. 标题匹配
         if (entry.Title.Contains(query, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        // 2. 关键字匹配
         foreach (var keyword in entry.Keywords)
         {
             if (keyword.Contains(query, StringComparison.OrdinalIgnoreCase))
@@ -46,10 +42,7 @@ public static class SearchService
     }
 
     /// <summary>
-    /// 应用过滤结果到 UI：
-    /// - 匹配项可见、不匹配项隐藏
-    /// - 分组内所有项都隐藏时，分组本身也隐藏
-    /// - 返回匹配项的标题列表（给 AutoSuggestBox 用）
+    /// 应用过滤结果到 UI
     /// </summary>
     public static List<string> ApplyFilter(
         IEnumerable<SearchEntry> allEntries,
@@ -61,7 +54,7 @@ public static class SearchService
 
         if (entries.Count == 0) return new List<string>();
 
-        // 1. 空搜索 → 全部显示
+        // 空搜索 → 全部显示
         if (string.IsNullOrWhiteSpace(query))
         {
             foreach (var e in entries)
@@ -73,7 +66,6 @@ public static class SearchService
             return new List<string>();
         }
 
-        // 2. 逐项匹配
         var matchedTitles = new List<string>();
         var visibleGroups = new HashSet<FrameworkElement>();
 
@@ -92,7 +84,6 @@ public static class SearchService
             }
         }
 
-        // 3. 更新分组可见性
         var allGroups = entries
             .Where(e => e.Group != null)
             .Select(e => e.Group!)
@@ -104,8 +95,6 @@ public static class SearchService
                 ? Visibility.Visible
                 : Visibility.Collapsed;
         }
-
-        AppLogger.Info(TAG, $"搜索 \"{query}\" → {matchedTitles.Count}/{entries.Count} 匹配");
 
         return matchedTitles;
     }

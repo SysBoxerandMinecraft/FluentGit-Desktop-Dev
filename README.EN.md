@@ -14,7 +14,7 @@
 | **Commit Changes** | Stage all (`git add -A`), commit (`git commit -m`) |
 | **Directory Browsing** | Directory tree view, double-click to open files, right-click menu (Open / Terminal / Explorer / Copy Path) |
 | **Settings Center** | Auto-find Git path + signature verification, build artifact filter toggle, settings search |
-| **Theme** | Follows system light/dark theme (Mica on Windows 11, solid color fallback on Windows 10) |
+| **Theme** | Follows system or manual toggle, persisted in settings (Mica on Windows 11, solid color fallback on Windows 10) |
 | **Notifications** | All operation results shown via InfoBar sliding notification, auto-dismiss |
 
 > **Clone feature** is implemented in `GitService` layer (with progress and cancellation), but the UI entry is temporarily commented out, reserved for future restoration.
@@ -31,7 +31,7 @@
 
 - **UI**: WinUI 3 / Windows App SDK 2.4
 - **Language**: C# / .NET 10
-- **Packaging**: MSIX (self-signed)
+- **Packaging**: MSIX (unsigned; requires Developer Mode or manual signing)
 - **Platform**: Windows 10 22H2 (19045) and above, Windows 11
 
 ---
@@ -40,32 +40,49 @@
 
 ```
 FluentGit/
-├── Easteregg/
-│   ├──You should go see for yourself.
-├── Views/                          # Pages
-│   ├── MainWindow.xaml             # Main window (Mica + custom TitleBar)
-│   ├── RepoPage.xaml               # Repo management, sync, commit
-│   ├── AdminPage.xaml              # Directory tree + context menu
-│   ├── SettingsPage.xaml           # Settings center (search, grouping)
-│   └── ...
-├── Services/
-│   ├── GitService/                 # Modular Git command wrapper
-│   │   ├── GitService.cs           # Main entry + common methods
-│   │   ├── GitService.Repository.cs
-│   │   ├── GitService.Remote.cs
-│   │   ├── GitService.Commit.cs
-│   │   ├── GitService.Status.cs
-│   │   ├── GitService.Branches.cs
-│   │   └── GitService.Models.cs
-│   ├── GitPathHelper.cs            # Auto-find Git path + signature verification
-│   ├── SettingsService.cs          # JSON settings persistence
-│   ├── AppLogger.cs                # Unified logging (OK / Warning / Error / Info)
-│   ├── AppState.cs                 # Global state (current repo path)
-│   └── Search/                     # Generic search module
-│       ├── SearchEntry.cs
-│       └── SearchService.cs
-├── Assets/                         # Icon resources
-└── ...
+├── App.xaml / App.xaml.cs           # Application entry, global exception handling
+├── MainWindow.xaml / .cs            # Main window (Mica + custom TitleBar + NavigationView)
+├── FluentGit.csproj                 # Project file
+├── app.manifest                     # App manifest (DPI, supported OS)
+├── Package.appxmanifest             # MSIX manifest
+├── Building.ps1                     # Build script (see "Using Building.ps1" above)
+│
+├── Views/                           # Pages
+│   ├── RepoPage.xaml / .cs          # Repo management, sync, commit
+│   ├── AdminPage.xaml / .cs         # Directory tree + context menu
+│   ├── SettingsPage.xaml / .cs      # Settings center (search, grouping)
+│   └── PlaceholderPage.xaml / .cs   # Theme settings (temporary page, to be merged into SettingsPage)
+│
+├── Services/                        # Services
+│   ├── AppState.cs                  # Global state (current repo path, Git path)
+│   ├── AppLogger.cs                 # Unified logging (OK / Warning / Error / Info)
+│   ├── CrashLogger.cs               # Crash log to disk (%LocalAppData%\FluentGit\logs)
+│   ├── SettingsService.cs           # JSON settings persistence (atomic write)
+│   ├── GitPathHelper.cs             # Git path auto-discovery + signature verification (cached)
+│   │
+│   ├── GitService/                  # Modular Git command wrapper
+│   │   ├── GitService.cs            # Main entry + RunGit (ArgumentList)
+│   │   ├── GitService.Repository.cs # init / clone
+│   │   ├── GitService.Remote.cs     # pull / fetch
+│   │   ├── GitService.Commit.cs     # add / commit
+│   │   ├── GitService.Status.cs     # status / change summary
+│   │   ├── GitService.Branches.cs   # branch list
+│   │   └── GitService.Models.cs     # GitStatusEntry
+│   │
+│   └── Search/                      # Generic search module
+│       ├── SearchEntry.cs           # Search entry (title / keywords / linked UI)
+│       └── SearchService.cs         # Matching, filtering, visibility updates
+│
+├── Assets/                          # Icon resources
+│   ├── AppIcon.ico
+│   ├── *.png                        # MSIX logos, splash screen
+│   └── File_Icon/                   # Directory tree icons (file / empty folder / full folder)
+│
+├── Easteregg/   
+|-- You should go see for yourself.                    
+└── .vscode/                         # VS Code configuration
+    ├── launch.json                  # Debug configuration
+    └── tasks.json                   # Build task
 ```
 
 ---
@@ -84,27 +101,54 @@ FluentGit/
 # Debug
 dotnet build FluentGit.csproj -c Debug -p:Platform=x64
 
+# Release
+dotnet build FluentGit.csproj -c Release -p:Platform=x64
+
 # Run
 .\bin\x64\Debug\net10.0-windows10.0.26100.0\win-x64\FluentGit.exe
 ```
 
-Or use the included `Building.ps1` script:
+### Using Building.ps1
+
+The repo ships with `Building.ps1`, which wraps the common flow: kill running process → clean → build.
 
 ```powershell
+# Debug build (default)
 ./Building.ps1
+
+# Release build
+./Building.ps1 -Configuration Release
+
+# Produce an MSIX package (same as dotnet publish, see next section)
+./Building.ps1 -Package
 ```
 
-### Package as MSIX
+**Parameters:**
 
-```powershell
-dotnet publish -c Release -p:Platform=x64 `
-  -p:RuntimeIdentifier=win-x64 `
-  -p:WindowsPackageType=MSIX `
-  -p:WindowsAppSDKSelfContained=false `
-  -p:GenerateAppxPackageOnBuild=true `
-  -p:AppxPackageSigningEnabled=false
-```
+| Parameter | Values | Default | Description |
+|---|---|---|---|
+| `-Configuration` | `Debug` / `Release` | `Debug` | Build configuration |
+| `-Package` | switch | off | Produce an MSIX package; ignores `-Configuration` (always uses Release internally) |
 
+**What the script does:**
+
+1. Changes to the script's own directory (uses `$PSScriptRoot`, independent of your current working directory)
+2. Kills any lingering `FluentGit.exe` process
+3. Runs `dotnet clean`
+4. Runs `dotnet build` or `dotnet publish`
+5. Returns a non-zero exit code if the build fails
+
+> **If you see "cannot be loaded because running scripts is disabled on this system"**, run once in PowerShell:
+>
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+> ```
+>
+> Or bypass for a single invocation:
+>
+> ```powershell
+> powershell -ExecutionPolicy Bypass -File .\Building.ps1
+> ```
 ---
 
 ## 🔐 Security
