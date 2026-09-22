@@ -23,7 +23,8 @@ if ($Package) {
       -p:WindowsPackageType=MSIX `
       -p:WindowsAppSDKSelfContained=false `
       -p:GenerateAppxPackageOnBuild=true `
-      -p:AppxPackageSigningEnabled=false
+      -p:AppxPackageSigningEnabled=false `
+      -p:AppxPackageAllowUnsigned=true
 } else {
     dotnet build FluentGit.csproj -c $Configuration -p:Platform=x64
 }
