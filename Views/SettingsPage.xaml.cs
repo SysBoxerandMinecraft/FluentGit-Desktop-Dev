@@ -2,7 +2,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentGit.Services;
@@ -18,7 +20,7 @@ public sealed partial class SettingsPage : Page
 
     private bool _isUpdating = false;
 
-    // ★ 设置项索引（用于搜索）
+    // 设置项索引（用于搜索）
     private readonly List<SearchEntry> _settings = new();
 
     public SettingsPage()
@@ -133,6 +135,7 @@ public sealed partial class SettingsPage : Page
             if (string.IsNullOrEmpty(gitPath) || !File.Exists(gitPath))
             {
                 UpdateSelectedPathDisplay("");
+                GitVersionDisplay.Visibility = Visibility.Collapsed;
                 AppLogger.Warning(TAG, "未找到 Git");
                 ShowInfoBar("警告", "未找到 Git，请先安装 Git for Windows", InfoBarSeverity.Warning);
                 return;
@@ -141,6 +144,7 @@ public sealed partial class SettingsPage : Page
             if (!GitPathHelper.ValidateGitPath(gitPath))
             {
                 UpdateSelectedPathDisplay(gitPath);
+                await UpdateGitVersionAsync(gitPath);
                 AppLogger.Error(TAG, $"签名验证失败: {gitPath}");
                 ShowInfoBar("错误",
                     "找到的 Git 未通过签名验证，可能不是官方版本。",
@@ -152,6 +156,7 @@ public sealed partial class SettingsPage : Page
             SettingsService.Save(settings);
 
             UpdateSelectedPathDisplay(gitPath);
+            await UpdateGitVersionAsync(gitPath);
             AppLogger.OK(TAG, $"自动找到并保存 Git: {gitPath}");
             ShowInfoBar("成功", $"已找到 Git 并保存: {gitPath}", InfoBarSeverity.Success);
         }
@@ -174,35 +179,86 @@ public sealed partial class SettingsPage : Page
             SelectedPathDisplay.Text = $"当前 Git 路径：{path}";
     }
 
-    // ========== InfoBar（从标题右侧滑入） ==========
+    // ========== 获取 Git 版本号 ==========
+    private async Task UpdateGitVersionAsync(string? gitPath)
+    {
+        if (string.IsNullOrEmpty(gitPath) || !File.Exists(gitPath))
+        {
+            GitVersionDisplay.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        try
+        {
+            var psi = new ProcessStartInfo(gitPath)
+            {
+                Arguments = "--version",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
+            };
+
+            using var process = Process.Start(psi);
+            if (process == null)
+            {
+                GitVersionDisplay.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            string output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
+            {
+                // git --version 输出形如: "git version 2.43.0.windows.1"
+                string version = output.Trim();
+                const string prefix = "git version ";
+                if (version.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    version = version.Substring(prefix.Length);
+
+                GitVersionDisplay.Text = $"版本：{version}";
+                GitVersionDisplay.Visibility = Visibility.Visible;
+                AppLogger.OK(TAG, $"Git 版本: {version}");
+            }
+            else
+            {
+                GitVersionDisplay.Visibility = Visibility.Collapsed;
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(TAG, $"获取 Git 版本失败: {ex.Message}");
+            GitVersionDisplay.Visibility = Visibility.Collapsed;
+        }
+    }
+
     // ========== InfoBar（从上方滑入，向上滑出） ==========
     private async void ShowInfoBar(string title, string message, InfoBarSeverity severity)
     {
-       _infoBarCts?.Cancel();
-       var newCts = new CancellationTokenSource();
-       _infoBarCts = newCts;
-       var token = newCts.Token;
+        _infoBarCts?.Cancel();
+        var newCts = new CancellationTokenSource();
+        _infoBarCts = newCts;
+        var token = newCts.Token;
 
-        // 停掉所有动画，复位
-       SlideInStoryboard.Stop();
-       SlideOutStoryboard.Stop();
-       InfoBarTransform.Y = -30;
-       InfoBarContainer.Opacity = 0;
-       InfoBarContainer.Visibility = Visibility.Visible;
+        SlideInStoryboard.Stop();
+        SlideOutStoryboard.Stop();
+        InfoBarTransform.Y = -30;
+        InfoBarContainer.Opacity = 0;
+        InfoBarContainer.Visibility = Visibility.Visible;
 
-      // 设置内容
-      StatusInfoBar.Title = title;
-      StatusInfoBar.Message = message;
-      StatusInfoBar.Severity = severity;
+        StatusInfoBar.Title = title;
+        StatusInfoBar.Message = message;
+        StatusInfoBar.Severity = severity;
 
-      // 播放滑入
-       SlideInStoryboard.Begin();
+        SlideInStoryboard.Begin();
 
-       try
-       {
-           await Task.Delay(InfoBarDisplayMilliseconds, token);
+        try
+        {
+            await Task.Delay(InfoBarDisplayMilliseconds, token);
 
-            // 播放滑出
             SlideOutStoryboard.Begin();
             await Task.Delay(200);
 
@@ -211,12 +267,12 @@ public sealed partial class SettingsPage : Page
             InfoBarContainer.Opacity = 0;
         }
         catch (TaskCanceledException)
-            {
+        {
             InfoBarContainer.Visibility = Visibility.Collapsed;
             InfoBarTransform.Y = -30;
             InfoBarContainer.Opacity = 0;
             SlideInStoryboard.Stop();
             SlideOutStoryboard.Stop();
-       }
+        }
     }
 }

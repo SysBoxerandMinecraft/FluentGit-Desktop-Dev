@@ -60,14 +60,12 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 标题 -->
             <TextBlock Grid.Column="0"
                        Text="设置"
                        FontSize="28"
                        FontWeight="SemiBold"
                        VerticalAlignment="Center"/>
 
-            <!-- ★ InfoBar 容器 -->
             <Border x:Name="InfoBarContainer"
                     Grid.Column="1"
                     Margin="20,0,20,0"
@@ -87,7 +85,6 @@
                          MinWidth="300"/>
             </Border>
 
-            <!-- 搜索框 -->
             <AutoSuggestBox x:Name="SearchBox"
                             Grid.Column="2"
                             Width="300"
@@ -106,7 +103,6 @@
                       VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="30,6,30,30" Spacing="24">
 
-                <!-- 无结果提示 -->
                 <TextBlock x:Name="NoResultText"
                            Text="未找到匹配的设置选项"
                            FontSize="14"
@@ -126,22 +122,44 @@
                             BorderThickness="1"
                             CornerRadius="6"
                             Padding="16">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="Git 安装路径"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"/>
+                        <Grid ColumnSpacing="20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                            <TextBlock x:Name="SelectedPathDisplay"
-                                       Text="正在查找 Git..."
-                                       FontSize="13"
-                                       Foreground="Gray"
-                                       TextWrapping="Wrap"/>
+                            <!-- Git 徽标 -->
+                            <Image Grid.Column="0"
+       Source="ms-appx:///Assets/GitAPPIcon.png"
+       Width="110"
+       Height="46"
+       Stretch="Uniform"
+       VerticalAlignment="Center"/>
 
-                            <ProgressRing x:Name="LoadingRing"
-                                          IsActive="True"
-                                          Width="24" Height="24"
-                                          HorizontalAlignment="Left"/>
-                        </StackPanel>
+                            <!-- 右侧信息 -->
+                            <StackPanel Grid.Column="1" Spacing="10">
+                                <TextBlock Text="Git 安装路径"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"/>
+
+                                <TextBlock x:Name="SelectedPathDisplay"
+                                           Text="正在查找 Git..."
+                                           FontSize="13"
+                                           Foreground="Gray"
+                                           TextWrapping="Wrap"/>
+
+                                <TextBlock x:Name="GitVersionDisplay"
+                                           Text=""
+                                           FontSize="13"
+                                           Foreground="Gray"
+                                           Visibility="Collapsed"/>
+
+                                <ProgressRing x:Name="LoadingRing"
+                                              IsActive="True"
+                                              Width="24" Height="24"
+                                              HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Grid>
                     </Border>
                 </StackPanel>
 
