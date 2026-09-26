@@ -68,12 +68,12 @@ FluentGit 项目创建的第一天，`MainWindow.xaml.cs` 的构造函数里就�
 
 ```csharp
 using FluentGit.Services;
-using Microsoft.UI.Xaml.Media;   // ★ 加这行
 using FluentGit.Views;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.IO;
 using System.Reflection;
@@ -87,26 +87,26 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         /*
-         *          _ooOoo_
-         *         o8888888o
-         *         88" . "88
-         *         (| -_- |)
-         *         O\  =  /O
-         *      ____/`---'\____
-         *    .'  \\|     |//  `.
-         *   /  \\|||  :  |||//  \
-         *  /  _||||| -:- |||||-  \
-         *  |   | \\\  -  /// |   |
-         *  | \_|  ''\---/''  |   |
-         *  \  .-\__  `-`  ___/-. /
-         * ___`. .'  /--.--\  `. . ___
-         * ."" '<  `.___\_<|>_/___.'  >'"".
-         * | | :  `- \`.;`\ _ /`;.`/ - ` : | |
-         * \  \ `-.   \_ __\ /__ _/   .-` /  /
-         * ======`-.____`-.___\_____/___.-`____.-'======
-         *                    `=---='
-         * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-         *               佛祖保佑   永无BUG
+        *                       _ooOoo_
+        *                      o8888888o
+        *                      88" . "88
+        *                      (| -_- |)
+        *                      O\  =  /O
+        *                   ____/`---'\____
+        *                 .'  \\|     |//  `.
+        *                /  \\|||  :  |||//  \
+        *               /  _||||| -:- |||||-  \
+        *               |   | \\\  -  /// |   |
+        *               | \_|  ''\---/''  |   |
+        *               \  .-\__  `-`  ___/-. /
+        *             ___`. .'  /--.--\  `. . __
+        *          ."" '<  `.___\_<|>_/___.'  >'"".
+        *         | | :  `- \`.;`\ _ /`;.`/ - ` : | |
+        *         \  \ `-.   \_ __\ /__ _/   .-` /  /
+        *    ======`-.____`-.___\_____/___.-`____.-'======
+        *                       `=---='
+        *   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        *             佛祖保佑            永无BUG
          */
 
         InitializeComponent();
@@ -120,7 +120,15 @@ public sealed partial class MainWindow : Window
         string iconPath = Path.Combine(appDir, "Assets", "AppIcon.ico");
         AppWindow.SetIcon(iconPath);
 
-        NavFrame.RequestedTheme = ElementTheme.Default;
+        // 主题：从设置读
+        ApplyThemeFromSettings();
+
+        // 返回按钮可见性：Frame.CanGoBack 不是依赖属性，x:Bind 不生效，手动维护
+        NavFrame.Navigated += (_, _) =>
+        {
+            AppTitleBar.IsBackButtonVisible = NavFrame.CanGoBack;
+        };
+
         NavFrame.Navigate(typeof(RepoPage));
     }
 
