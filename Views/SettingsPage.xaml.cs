@@ -1,3 +1,4 @@
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -33,9 +34,27 @@ public sealed partial class SettingsPage : Page
     {
         BuildSearchIndex();
 
+        var settings = SettingsService.Load();
+
         _isUpdating = true;
-        FilterArtifactsCheckBox.IsChecked = SettingsService.Load().FilterBuildArtifacts;
+
+        // 过滤选项
+        FilterArtifactsCheckBox.IsChecked = settings.FilterBuildArtifacts;
+
+        // 背景效果
+        string currentBackdrop = settings.BackdropType ?? "Default";
+        foreach (var obj in BackdropComboBox.Items)
+        {
+            if (obj is ComboBoxItem item && (item.Tag as string) == currentBackdrop)
+            {
+                BackdropComboBox.SelectedItem = item;
+                break;
+            }
+        }
+
         _isUpdating = false;
+
+        UpdateBackdropHint(currentBackdrop);
 
         await AutoFindAndValidateGitAsync();
     }
@@ -48,9 +67,22 @@ public sealed partial class SettingsPage : Page
         _settings.Add(new SearchEntry
         {
             Title = "Git 安装路径",
-            Keywords = new[] { "git", "安装", "路径", "path", "install", "位置", "目录" },
+            Keywords = new[] { "git", "安装", "路径", "path", "install", "位置", "目录", "版本", "version" },
             Item = ItemGitPath,
             Group = GroupGit
+        });
+
+        _settings.Add(new SearchEntry
+        {
+            Title = "窗口背景效果",
+            Keywords = new[]
+            {
+                "背景", "效果", "外观", "主题",
+                "mica", "acrylic", "亚克力", "毛玻璃",
+                "backdrop", "background", "appearance"
+            },
+            Item = ItemBackdrop,
+            Group = GroupAppearance
         });
 
         _settings.Add(new SearchEntry
@@ -114,6 +146,52 @@ public sealed partial class SettingsPage : Page
         settings.FilterBuildArtifacts = false;
         SettingsService.Save(settings);
         AppLogger.OK(TAG, "过滤编译产物：已关闭");
+    }
+
+    // ========== 背景效果 ==========
+    private void OnBackdropChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isUpdating) return;
+        if (BackdropComboBox.SelectedItem is not ComboBoxItem item) return;
+        if (item.Tag is not string tag) return;
+
+        var settings = SettingsService.Load();
+        settings.BackdropType = tag;
+        SettingsService.Save(settings);
+
+        // 立即生效，不用重启
+        App.MainWindow?.ApplyBackdrop(tag);
+
+        UpdateBackdropHint(tag);
+        AppLogger.OK(TAG, $"背景效果切换为: {tag}");
+    }
+
+    private void UpdateBackdropHint(string tag)
+    {
+        string hint = tag switch
+        {
+            "Default" => MicaController.IsSupported()
+                ? "根据系统自动选择最佳效果。当前系统支持 Mica。"
+                : "根据系统自动选择最佳效果。当前系统不支持 Mica，将使用纯色背景。",
+
+            "Mica" => MicaController.IsSupported()
+                ? "当前系统支持 Mica。采样桌面壁纸色调，性能开销低。"
+                : "当前系统不支持 Mica，将回退为纯色背景。",
+
+            "MicaAlt" => MicaController.IsSupported()
+                ? "当前系统支持 Mica Alt。比标准 Mica 更浅。"
+                : "当前系统不支持 Mica Alt，将回退为纯色背景。",
+
+            "Acrylic" => DesktopAcrylicController.IsSupported()
+                ? "当前系统支持亚克力。实时模糊窗口背后内容，性能开销较大。"
+                : "当前系统不支持亚克力，将回退为纯色背景。",
+
+            "None" => "使用纯色背景，性能最好。",
+
+            _ => ""
+        };
+
+        BackdropHint.Text = hint;
     }
 
     // ========== Git 自动查找 ==========

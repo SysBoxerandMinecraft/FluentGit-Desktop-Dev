@@ -10,6 +10,7 @@ public class AppSettings
     public string? GitHash { get; set; }
     public string? AppTheme { get; set; }
     public bool FilterBuildArtifacts { get; set; } = true;
+    public string? BackdropType { get; set; }
 }
 
 public static class SettingsService
@@ -59,10 +60,20 @@ public static class SettingsService
         {
             string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
 
-            // 原子写入：先写临时文件，再替换
-            string tmp = _settingsPath + ".tmp";
-            File.WriteAllText(tmp, json);
-            File.Replace(tmp, _settingsPath, null, ignoreMetadataErrors: true);
+            var dir = Path.GetDirectoryName(_settingsPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            if (File.Exists(_settingsPath))
+            {
+                string tmp = _settingsPath + ".tmp";
+                File.WriteAllText(tmp, json);
+                File.Replace(tmp, _settingsPath, null, ignoreMetadataErrors: true);
+            }
+            else
+            {
+                File.WriteAllText(_settingsPath, json);
+            }
         }
         catch (Exception ex)
         {

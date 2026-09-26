@@ -4,10 +4,10 @@ using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.IO;
 using System.Reflection;
-using Microsoft.UI.Xaml.Media;  
 
 namespace FluentGit;
 
@@ -63,25 +63,61 @@ public sealed partial class MainWindow : Window
         NavFrame.Navigate(typeof(RepoPage));
     }
 
-    // ========== Mica / 回退 ==========
+    // ========== Mica / Acrylic / 回退 ==========
     private void InitializeBackdrop()
+    {
+        var settings = SettingsService.Load();
+        ApplyBackdrop(settings.BackdropType ?? "Default");
+    }
+
+    /// <summary>
+    /// 应用窗口背景效果。可在运行时调用，动态切换。
+    /// </summary>
+    public void ApplyBackdrop(string backdropType)
     {
         try
         {
-            if (MicaController.IsSupported())
+            switch (backdropType)
             {
-                SystemBackdrop = new MicaBackdrop();
-                AppLogger.OK(TAG, "Mica backdrop enabled.");
-            }
-            else
-            {
-                SystemBackdrop = null;
-                AppLogger.Info(TAG, "Mica not supported. Falling back to default background.");
+                case "Mica":
+                    SystemBackdrop = MicaController.IsSupported()
+                        ? new MicaBackdrop { Kind = MicaKind.Base }
+                        : null;
+                    AppLogger.OK(TAG, $"Backdrop: Mica (supported={MicaController.IsSupported()})");
+                    break;
+
+                case "MicaAlt":
+                    SystemBackdrop = MicaController.IsSupported()
+                        ? new MicaBackdrop { Kind = MicaKind.BaseAlt }
+                        : null;
+                    AppLogger.OK(TAG, $"Backdrop: MicaAlt (supported={MicaController.IsSupported()})");
+                    break;
+
+                case "Acrylic":
+                    SystemBackdrop = DesktopAcrylicController.IsSupported()
+                        ? new DesktopAcrylicBackdrop()
+                        : null;
+                    AppLogger.OK(TAG, $"Backdrop: Acrylic (supported={DesktopAcrylicController.IsSupported()})");
+                    break;
+
+                case "None":
+                    SystemBackdrop = null;
+                    AppLogger.OK(TAG, "Backdrop: None (solid color)");
+                    break;
+
+                case "Default":
+                default:
+                    SystemBackdrop = MicaController.IsSupported()
+                        ? new MicaBackdrop()
+                        : null;
+                    AppLogger.OK(TAG, $"Backdrop: Default (Mica={MicaController.IsSupported()})");
+                    break;
             }
         }
         catch (Exception ex)
         {
-            AppLogger.Error(TAG, $"InitializeBackdrop 异常: {ex.Message}");
+            AppLogger.Error(TAG, $"ApplyBackdrop 异常: {ex.Message}");
+            SystemBackdrop = null;
         }
     }
 

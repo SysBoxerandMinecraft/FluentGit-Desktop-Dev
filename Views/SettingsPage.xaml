@@ -130,11 +130,11 @@
 
                             <!-- Git 徽标 -->
                             <Image Grid.Column="0"
-       Source="ms-appx:///Assets/GitAPPIcon.png"
-       Width="110"
-       Height="46"
-       Stretch="Uniform"
-       VerticalAlignment="Center"/>
+                                   Source="Assets/GitAPPIcon.png"
+                                   Width="110"
+                                   Height="46"
+                                   Stretch="Uniform"
+                                   VerticalAlignment="Bottom"/>
 
                             <!-- 右侧信息 -->
                             <StackPanel Grid.Column="1" Spacing="10">
@@ -160,6 +160,42 @@
                                               HorizontalAlignment="Left"/>
                             </StackPanel>
                         </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- ==================== 外观 ==================== -->
+                <StackPanel x:Name="GroupAppearance" Spacing="10">
+                    <TextBlock Text="外观"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+
+                    <Border x:Name="ItemBackdrop"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="16">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="窗口背景效果"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"/>
+
+                            <ComboBox x:Name="BackdropComboBox"
+                                      HorizontalAlignment="Left"
+                                      MinWidth="220"
+                                      SelectionChanged="OnBackdropChanged">
+                                <ComboBoxItem Content="跟随系统" Tag="Default"/>
+                                <ComboBoxItem Content="Mica" Tag="Mica"/>
+                                <ComboBoxItem Content="Mica Alt（更浅）" Tag="MicaAlt"/>
+                                <ComboBoxItem Content="亚克力（毛玻璃）" Tag="Acrylic"/>
+                                <ComboBoxItem Content="纯色" Tag="None"/>
+                            </ComboBox>
+
+                            <TextBlock x:Name="BackdropHint"
+                                       FontSize="12"
+                                       Foreground="Gray"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
                     </Border>
                 </StackPanel>
 
