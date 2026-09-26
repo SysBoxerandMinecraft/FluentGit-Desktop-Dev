@@ -130,11 +130,11 @@
 
                             <!-- Git 徽标 -->
                             <Image Grid.Column="0"
-                                   Source="Assets/GitAPPIcon.png"
+                                   Source="ms-appx:///Assets/GitAPPIcon.png"
                                    Width="110"
                                    Height="46"
                                    Stretch="Uniform"
-                                   VerticalAlignment="Bottom"/>
+                                   VerticalAlignment="Center"/>
 
                             <!-- 右侧信息 -->
                             <StackPanel Grid.Column="1" Spacing="10">
