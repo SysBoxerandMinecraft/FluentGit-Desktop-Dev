@@ -32,6 +32,7 @@ project.lock.json
 # MSIX packaging output
 AppPackages/
 BundleArtifacts/
+*.pfx
 *.msix
 *.msixupload
 *.appx
