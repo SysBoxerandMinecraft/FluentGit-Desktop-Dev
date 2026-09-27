@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2026 SysBoxerandMinecraft. Licensed under the MIT License. -->
 <?xml version="1.0" encoding="utf-8" ?>
 <Window
     x:Class="FluentGit.MainWindow"

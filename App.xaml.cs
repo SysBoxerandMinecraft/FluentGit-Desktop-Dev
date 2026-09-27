@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿// Copyright (c) 2026 SysBoxerandMinecraft. Licensed under the MIT License.
+using Microsoft.UI.Xaml;
 using System;
 using FluentGit.Services;
 

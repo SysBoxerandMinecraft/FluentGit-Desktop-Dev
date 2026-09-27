@@ -1,3 +1,4 @@
+// Copyright (c) 2026 SysBoxerandMinecraft. Licensed under the MIT License.
 using FluentGit.Services;
 using FluentGit.Views;
 using Microsoft.UI.Composition.SystemBackdrops;
