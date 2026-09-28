@@ -48,7 +48,10 @@ FluentGit/
 ├── Building.ps1                     # Build script (see "Using Building.ps1" above)
 │
 ├── Views/                           # Pages
-│   ├── RepoPage.xaml / .cs          # Repo management, sync, commit
+│   ├── RepoPage.xaml / .cs          # Page skeleton, fields + loading + Git detection.
+│   ├── RepoPage.Status.cs           # Change status refresh and UI visibility (show/hide).
+│   ├── RepoPage.InfoBar.cs          # InfoBar slide-in/slide-out animations.
+│   ├── RepoPage.Actions.cs          # Git operation events, uniformly centralized into ExecuteGitOperationAsync.
 │   ├── AdminPage.xaml / .cs         # Directory tree + context menu
 │   ├── SettingsPage.xaml / .cs      # Settings center (search, grouping)
 │   └── PlaceholderPage.xaml / .cs   # Theme settings (temporary page, to be merged into SettingsPage)

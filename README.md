@@ -50,7 +50,10 @@ FluentGit/
 ├── Building.ps1                     # 构建脚本（见上方「使用 Building.ps1」）
 │
 ├── Views/                           # 页面层
-│   ├── RepoPage.xaml / .cs          # 仓库管理、同步、提交
+│   ├── RepoPage.xaml / .cs          # 页面骨架，字段 + 加载 + Git 检测。
+│   ├── RepoPage.Status.cs           # 变更状态刷新与界面显隐
+│   ├── RepoPage.InfoBar.cs          # InfoBar 滑入滑出动画
+│   ├── RepoPage.Actions.cs          # Git 操作事件，统一收敛进ExecuteGitOperationAsync
 │   ├── AdminPage.xaml / .cs         # 目录树 + 右键菜单
 │   ├── SettingsPage.xaml / .cs      # 设置中心（搜索、分组）
 │   └── PlaceholderPage.xaml / .cs   # 主题设置（临时页，后续并入 SettingsPage）
