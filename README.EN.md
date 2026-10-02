@@ -131,7 +131,8 @@ The repo ships with `Building.ps1`, which wraps the common flow: kill running pr
 | Parameter | Values | Default | Description |
 |---|---|---|---|
 | `-Configuration` | `Debug` / `Release` | `Debug` | Build configuration |
-| `-Package` | switch | off | Produce an MSIX package; ignores `-Configuration` (always uses Release internally) |
+| `-Platform` | `x64` / `ARM64` | `x64` | Target architecture |
+| `-Package` | switch | off | Build MSIX package (forces Release internally) |
 
 **What the script does:**
 
@@ -170,15 +171,22 @@ A **digital Buddha** is enshrined at the top of the `MainWindow.xaml.cs` constru
 
 ---
 
-## 🗺️ Roadmap
+## 📦 Install MSIX
 
-- [ ] Commit history (`git log`)
-- [ ] Branch switching (`git checkout`)
-- [ ] Push (`git push`)
-- [ ] Built-in `.gitignore` editor
-- [ ] Restore clone UI (progress bar + cancel)
-- [ ] Multi-repository management
+### Requirements
 
+- Windows 10 22H2 (10.0.19045) or later (x64)
+- Windows 11 (ARM64/x64)
+- No separate .NET runtime required (self-contained)
+
+### Steps
+
+1. Download the `.msix` file
+2. Trust the signing certificate before installing:
+   - Double-click `FluentGit_TemporaryKey.pfx`
+   - Choose **Local Machine** → **Place all certificates in the following store** → **Trusted Root Certification Authorities**
+3. Double-click the `.msix` to install
+4. Launch from the Start menu
 ---
 
 ## 📄 License

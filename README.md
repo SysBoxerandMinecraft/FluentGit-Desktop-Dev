@@ -134,7 +134,8 @@ dotnet build FluentGit.csproj -c Release -p:Platform=x64
 | 参数 | 可选值 | 默认 | 说明 |
 |---|---|---|---|
 | `-Configuration` | `Debug` / `Release` | `Debug` | 构建配置 |
-| `-Package` | 开关 | 关 | 打 MSIX 包，忽略 `-Configuration`（内部固定用 Release） |
+| `-Platform` | `x64` / `ARM64` | `x64` | 目标架构 |
+| `-Package` | 开关 | 关 | 打 MSIX 包（内部固定 Release） |
 
 **脚本会做什么：**
 
@@ -172,16 +173,22 @@ dotnet build FluentGit.csproj -c Release -p:Platform=x64
 > **请勿移除**。实测移除后 BUG 率上升 100%。（开玩笑的……大概）
 
 ---
+## 📦 安装 MSIX
 
-## 🗺️ 开发计划
+### 系统要求
 
-- [ ] 提交历史（`git log`）
-- [ ] 分支切换（`git checkout`）
-- [ ] 推送（`git push`）
-- [ ] 内置 `.gitignore` 编辑器
-- [ ] 恢复克隆 UI（进度条 + 取消）
-- [ ] 多仓库管理
+- Windows 10 22H2 (10.0.19045) 及以上（x64）
+- Windows 11（ARM64/x64）
+- 无需单独安装 .NET 运行时（已自包含打包）
 
+### 安装步骤
+
+1. 下载 `.msix` 文件
+2. 双击安装前，需要先信任签名证书：
+   - 双击 `FluentGit_TemporaryKey.pfx`
+   - 选择 **本地计算机** → **将所有的证书都放入下列存储** → **受信任的根证书颁发机构**
+3. 双击 `.msix` 安装
+4. 从开始菜单启动
 ---
 
 ## 📄 开源协议

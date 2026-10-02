@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <Copyright>Copyright (c) 2026 SysBoxerandMinecraft</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -7,8 +8,10 @@
     <TargetPlatformMinVersion>10.0.19045.0</TargetPlatformMinVersion>
     <RootNamespace>FluentGit</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Platforms>x86;x64;ARM64</Platforms>
-    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
+
+    <!-- 只保留 x64 和 ARM64 -->
+    <Platforms>x64;ARM64</Platforms>
+
     <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
@@ -17,31 +20,41 @@
     <Nullable>enable</Nullable>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <WindowsPackageType>None</WindowsPackageType>
+
+    <!-- 代码分析 -->
     <AnalysisLevel>latest</AnalysisLevel>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- 自包含发布 -->
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
-  <Content Include="Assets\SplashScreen.scale-200.png" />
-  <Content Include="Assets\LockScreenLogo.scale-200.png" />
-  <Content Include="Assets\Square150x150Logo.scale-200.png" />
-  <Content Include="Assets\Square44x44Logo.scale-200.png" />
-  <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
-  <Content Include="Assets\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
-  <Content Include="Assets\Wide310x150Logo.scale-200.png" />
-  <Content Include="Assets\GitAPPIcon.png">
-    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  </Content>          <!-- ← 只加了这三行 -->
-</ItemGroup>
-  
-  <ItemGroup>
-    <Content Include="Assets\File_Icon\**\*.png">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <Content Include="Assets\SplashScreen.scale-200.png" />
+    <Content Include="Assets\LockScreenLogo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\StoreLogo.scale-200.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="Assets\GitAPPIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  
+
   <ItemGroup>
+    <Content Include="Assets\File_Icon\**\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 未使用的默认模板资源，剔除以减小包体积 -->
     <Content Remove="Assets\BadgeLogo.scale-100.png" />
     <Content Remove="Assets\BadgeLogo.scale-125.png" />
     <Content Remove="Assets\BadgeLogo.scale-150.png" />
@@ -92,34 +105,16 @@
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
-  <!--
-    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
-    Tools extension to be activated for this project even if the Windows App SDK Nuget
-    package has not yet been restored.
-  -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
   </ItemGroup>
 
-  <!--
-    Microsoft.Windows.SDK.BuildTools.WinApp adds first-class support for
-    `dotnet run` on packaged WinUI apps: it hooks the .NET CLI Run target to
-    register a debug identity via the winapp CLI and launch the app with
-    package identity (AUMID).
-    Set <EnableWinAppRunSupport>false</EnableWinAppRunSupport> in a
-    <PropertyGroup> above to opt out.
-  -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="0.6.1" />
   </ItemGroup>
 
-  <!--
-    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
-    Explorer "Package and Publish" context menu entry to be enabled for this project even if
-    the Windows App SDK Nuget package has not yet been restored.
-  -->
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
@@ -128,14 +123,20 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
+
+    <!-- 自包含 + WinUI 反射多，禁止 Trim，否则运行时会崩 -->
+    <PublishTrimmed>False</PublishTrimmed>
+
     <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
     <AppxPackageSigningEnabled>False</AppxPackageSigningEnabled>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <GenerateTestArtifacts>False</GenerateTestArtifacts>
     <AppxBundle>Never</AppxBundle>
+
+    <!-- 占位符，后续改成真实更新地址，或者整行删掉 -->
     <AppInstallerUri>https://example.com/updates</AppInstallerUri>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
   </PropertyGroup>
+
 </Project>
