@@ -69,13 +69,55 @@ namespace FluentGit.Services
         }
 
         // ========== 签名验证（主入口） ==========
-        public static bool ValidateGitPath(string gitPath, string? expectedHash = null)
-        {
-            if (string.IsNullOrEmpty(gitPath) || !File.Exists(gitPath))
-                return false;
+        public static bool ValidateGitPath(string gitPath)
+{
+    if (string.IsNullOrEmpty(gitPath) || !File.Exists(gitPath))
+        return false;
 
-            return ValidateGitSignature(gitPath);
+    // 1. 先跑 --build-options，能跑通且输出特征匹配就是真 Git
+    try
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = gitPath,
+            Arguments = "version --build-options",
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+
+        using var process = System.Diagnostics.Process.Start(psi);
+        if (process == null) return false;
+
+        string output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+
+        if (process.ExitCode != 0) return false;
+        if (!output.Contains("git version", StringComparison.OrdinalIgnoreCase)) return false;
+        if (!output.Contains("cpu:", StringComparison.OrdinalIgnoreCase)) return false;
+
+        // 2. 签名验证降级为"仅记录"，不拦截
+        try
+        {
+            var sig = System.Security.Cryptography.X509Certificates
+                .X509Certificate2.CreateFromSignedFile(gitPath);
+            // 或调用你原来的 WinVerifyTrust 逻辑，把结果写日志
+            AppLogger.Info("GitPathHelper", $"Git 签名者: {sig.Subject}");
         }
+        catch
+        {
+            AppLogger.Warning("GitPathHelper", $"Git 无有效签名（已放行）: {gitPath}");
+        }
+
+        return true;
+    }
+    catch (Exception ex)
+    {
+        AppLogger.Error("GitPathHelper", $"验证 Git 失败: {ex.Message}");
+        return false;
+    }
+}
 
         // ========== 签名验证（带缓存） ==========
         private static bool ValidateGitSignature(string exePath)

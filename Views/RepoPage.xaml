@@ -62,7 +62,7 @@
                     <HyperlinkButton Content="下载 Git for Windows" NavigateUri="https://git-scm.com/install/windows" />
                 </StackPanel>
 
-                <!-- ★ 操作面板：初始化 / 打开 / 克隆 -->
+                <!-- 操作面板：初始化 / 打开 / 克隆 -->
                 <StackPanel x:Name="RepoActionsPanel" Visibility="Visible" Spacing="10">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -92,10 +92,12 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="仓库操作" FontWeight="SemiBold" FontSize="16" />
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Button x:Name="PullButton" Content="更新"
+                            <Button x:Name="PullButton" Content="拉取"
                                     Click="OnPullRepository" MinHeight="32" />
                             <Button x:Name="FetchButton" Content="获取"
                                     Click="OnFetchRepository" MinHeight="32" />
+                            <Button x:Name="PushButton" Content="推送"
+                                    Click="OnPushRepository" MinHeight="32" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

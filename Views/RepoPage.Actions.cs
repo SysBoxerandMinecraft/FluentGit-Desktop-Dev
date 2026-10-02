@@ -230,4 +230,16 @@ public sealed partial class RepoPage
     {
         RefreshChangeStatus();
     }
+    // ========== 推送 ==========
+    private async void OnPushRepository(object sender, RoutedEventArgs e)
+    {
+        await ExecuteGitOperationAsync(
+            "OnPushRepository",
+            async (git, repo) =>
+            {
+                var r = await Task.Run(() => GitService.PushRepository(git, repo));
+                return (r.Success, r.Message);
+            },
+            startMessage: "正在推送到远程...");
+    }
 }
