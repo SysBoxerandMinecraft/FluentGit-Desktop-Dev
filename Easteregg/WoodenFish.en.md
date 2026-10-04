@@ -9,19 +9,19 @@ Interactive version: [WoodenFish.en.html](./WoodenFish.en.html) (open directly i
 
 ## 1. Origin
 
-The FluentGit team has a habit: **after every Code Review that tears you apart, tap the wooden fish once.**
+I have a habit: after every self-review that tears me apart, tap the wooden fish once.
 
-At first, only one person tapped.
-Then two.
-Then the entire team had an HTML wooden fish on screen during meetings, tapping while discussing.
+At first, only I tapped.
+Later, still only I tapped.
+Then I started putting an HTML wooden fish on screen during meetings, tapping while thinking.
 
-It is not superstition. It is **emotional regulation**.
+It is not superstition. It is emotional regulation.
 
-Code Review is where you get torn apart the most.
-You are right. They are right. But you are not talking about the same thing.
+Self code review is where I get torn apart the most.
+I am right. I am also right. But I am not talking about the same thing.
 At that moment, tap the fish. Merit +1.
 
-**You did not win. But you did not explode. That is the merit.**
+I did not win. But I did not explode. That is the merit.
 
 ---
 

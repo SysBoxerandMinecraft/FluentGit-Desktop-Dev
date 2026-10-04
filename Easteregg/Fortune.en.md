@@ -9,27 +9,28 @@ Chinese version: [Fortune.md](./Fortune.md)
 
 ## 1. Origin
 
-The FluentGit team has an ancient way of making decisions.
+FluentGit has an ancient way of making decisions.
 
 Not a meeting.
 Not a vote.
 Not an A/B test.
 
-A **fortune draw**.
+A fortune draw.
 
-This tradition started during an architecture argument.
-Two people argued for two hours: "Should we split `GitService` right now?"
-Neither convinced the other.
+This tradition started during an architecture argument with myself.
+I argued for two hours: “Should I split GitService right now?”
+I could not convince myself.
 
-An old engineer on the team said one sentence:
+So I said to myself:
 
-> "Let's draw a fortune."
+“Let’s draw a fortune.”
 
-The fortune came up **Auspicious**.
-So they split it.
+The fortune came up Auspicious.
+So I split it.
 After the split, it really was cleaner.
 
-**Since then, whenever a technical decision is unclear, a fortune is drawn.**
+Since then, whenever a technical decision is unclear, I draw a fortune.
+A solo developer has no team vote. The fortune is the silent third party.
 
 ---
 

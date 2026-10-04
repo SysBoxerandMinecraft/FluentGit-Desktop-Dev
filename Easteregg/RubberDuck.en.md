@@ -9,19 +9,21 @@ Chinese version: [RubberDuck.md](./RubberDuck.md)
 
 ## 1. Origin
 
-On the desks of the FluentGit team sits a small yellow duck.
+On my desk sits a small yellow duck.
 
 It might be plastic. It might be rubber. It might just be a yellow, round, seemingly harmless thing.
-**But it is the quietest, most patient, most expensive engineer on this project.**
+But it is the quietest, most patient, most expensive engineer on this project.
 
 It does not speak.
 It does not interrupt.
-It does not say "I get it" when you are only halfway through.
+It does not say “I get it” when I am only halfway through.
 
-It just looks at you.
+It just looks at me.
 
-**And then you find the problem yourself.**
+And then I find the problem myself.
 
+A solo developer has no colleague to explain things to.
+The duck is my code review audience.
 ---
 
 ## 2. What Is Rubber Duck Debugging

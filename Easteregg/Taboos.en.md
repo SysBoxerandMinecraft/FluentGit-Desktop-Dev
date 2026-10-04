@@ -8,20 +8,24 @@ Chinese version: [Taboos.md](./Taboos.md)
 
 ## 1. Origin
 
-Since its founding, the FluentGit team has kept a "Taboo List".
+FluentGit has not shipped a package yet.
+This Taboo List comes from incidents in another project I once worked on.
 
 It did not come from nowhere.
-**Under every taboo lies a real incident.**
+Under every taboo lies a real incident.
 
-We did not want to write this document at first.
-We thought, "We are all experienced engineers. We don't need rules like these."
+I did not want to write this document at first.
+I thought, “I am an experienced engineer. I don’t need rules like these.”
 
-Until someone shipped a release on Friday afternoon.
-Until someone said, "This change is tiny."
-Until someone pressed F5 in production.
+Until I shipped a release on Friday afternoon in that project.
+Until I said, “This change is tiny.”
+Until I pressed F5 in production.
 
-That night, the team worked until 3 a.m.
+That night, I worked alone until 3 a.m.
 The next morning, this document existed.
+
+A solo developer has no colleague to clean up the scene.
+So these taboos are my colleague.
 
 ---
 

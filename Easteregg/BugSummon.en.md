@@ -9,22 +9,25 @@ Chinese version: [BugSummon.md](./BugSummon.md)
 
 ## 1. Origin
 
-The FluentGit team has two iron rules:
+I have two iron rules:
 
-1. **A bug that can be reproduced is a bug.**
-2. **A bug that cannot be reproduced is a ghost.**
+A bug that can be reproduced is a bug.
+
+A bug that cannot be reproduced is a ghost.
 
 Ghosts are troublesome.
-They do not appear on your machine. They only appear on the user's machine.
+They do not appear on my machine. They only appear on the user’s machine.
 They do not appear in Debug. They only appear in Release.
-They do not appear when you are staring at the screen. They appear in the 0.5 seconds it takes you to turn around and get water.
+They do not appear when I am staring at the screen. They appear in the 0.5 seconds it takes me to turn around and get water.
 
 When facing a ghost, there are two approaches:
 
-- **Scientific approach**: Add logs, add telemetry, add traces, track it down, pin it.
-- **Metaphysical approach**: Draw a summoning circle.
+Scientific approach: Add logs, add telemetry, add traces, track it down, pin it.
+
+Metaphysical approach: Draw a summoning circle.
 
 This document covers both.
+A solo developer has no team to help reproduce it, so the circle matters more.
 
 ---
 

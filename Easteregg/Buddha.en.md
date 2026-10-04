@@ -8,16 +8,19 @@ Chinese version: [Buddha.md](./Buddha.md)
 
 ## 1. Origin
 
-On the first day of the FluentGit project, a Buddha moved into the constructor of `MainWindow.xaml.cs`.
+On the first day of the FluentGit project, a Buddha moved into the constructor of MainWindow.xaml.cs.
 
-It was an ordinary night. The first `dotnet build` reported 47 errors. Twelve came from NuGet restore failures.
-Of the remaining 35, 34 were semicolon issues. The last one nobody ever figured out — it disappeared on its own.
+It was an ordinary night. The first dotnet build reported 47 errors. Twelve came from NuGet restore failures.
+Of the remaining 35, 34 were semicolon issues. The last one I never figured out — it disappeared on its own.
 
-The next morning, someone pasted an ASCII Buddha at the top of the `MainWindow.xaml.cs` constructor.
+The next morning, I pasted an ASCII Buddha at the top of the MainWindow.xaml.cs constructor.
 That afternoon, the build passed.
 
-**There is no evidence these two events are connected.**
-But since then, nobody has touched it.
+There is no evidence these two events are connected.
+But since then, I have not touched it.
+
+Not because I am afraid.
+Because when you develop alone, you need a guardian symbol that does not speak.
 
 ---
 

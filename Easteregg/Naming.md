@@ -9,21 +9,22 @@
 
 ## 一、缘起
 
-FluentGit 项目曾经有过一个方法，叫 `ExecutePerfectly`。
+FluentGit 曾经有过一个方法，叫 ExecutePerfectly。
 
-写它的人当时很有信心。
+写它的人是我。当时我很有信心。
 一周之后，这个方法出了三个 Bug。
-两周之后，改名成 `TryExecute`。
-三周之后，它被拆成五个方法，改名成 `ExecuteWithFallback`。
+两周之后，我把它改名成 TryExecute。
+三周之后，我把它拆成五个方法，改名成 ExecuteWithFallback。
 
-**从那以后，项目组明白了一个道理：**
-**命名不是修辞。命名是预言。**
+从那以后，我明白了一个道理：
+命名不是修辞。命名是预言。
 
-你给一个方法起名叫 `Perfect`，宇宙就会派一个 Bug 来证明你不 Perfect。
-你给一个变量起名叫 `temp`，它就会永远留在代码里，变成 `temp2`、`temp3`、`tempFinal`。
+你给一个方法起名叫 Perfect，宇宙就会派一个 Bug 来证明你不 Perfect。
+你给一个变量起名叫 temp，它就会永远留在代码里，变成 temp2、temp3、tempFinal。
 
 命名不是给代码起的。
-**命名是给未来的人起的。**
+命名是给未来的人起的。
+而独自开发时，那个“未来的人”，首先就是三个月后的我自己。
 
 ---
 

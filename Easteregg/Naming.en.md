@@ -9,22 +9,22 @@ Chinese version: [Naming.md](./Naming.md)
 
 ## 1. Origin
 
-The FluentGit project once had a method called `ExecutePerfectly`.
+FluentGit once had a method called ExecutePerfectly.
 
-The person who wrote it was confident.
+I wrote it. I was confident.
 A week later, that method had three bugs.
-Two weeks later, it was renamed `TryExecute`.
-Three weeks later, it was split into five methods and renamed `ExecuteWithFallback`.
+Two weeks later, I renamed it TryExecute.
+Three weeks later, I split it into five methods and renamed it ExecuteWithFallback.
 
-**Since then, the team has understood one thing:**
-**Naming is not rhetoric. Naming is prophecy.**
+Since then, I have understood one thing:
+Naming is not rhetoric. Naming is prophecy.
 
-Name a method `Perfect`, and the universe will send a bug to prove you are not Perfect.
-Name a variable `temp`, and it will stay in the codebase forever, becoming `temp2`, `temp3`, `tempFinal`.
+Name a method Perfect, and the universe will send a bug to prove you are not Perfect.
+Name a variable temp, and it will stay in the codebase forever, becoming temp2, temp3, tempFinal.
 
 Naming is not for the code.
-**Naming is for whoever reads it in the future.**
-
+Naming is for whoever reads it in the future.
+When you develop alone, that future reader is first of all you, three months later.
 ---
 
 ## 2. The Threefold Metaphysics of Naming

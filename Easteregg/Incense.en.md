@@ -9,16 +9,23 @@ Chinese version: [Incense.md](./Incense.md)
 
 ## 1. Origin
 
-FluentGit's first official Release was a disaster.
+FluentGit has not shipped a package yet.
+This Incense Ritual comes from another small WinUI tool project I once maintained.
 
-The tag was placed on the wrong branch. MSIX signing was left on. `dotnet publish` crashed halfway through while VS died.
+The first formal release of that project was a disaster.
+
+The tag was on the wrong branch, package signing was left on, and dotnet publish crashed halfway through while VS died.
 The v0.1.0 that finally shipped opened to a blank window. Clicking anywhere did nothing.
-Someone wrote in the group chat: "Did we forget to burn incense?"
+I wrote in my log: “Did I forget to burn incense?”
 
-The next day, the team drafted this "Incense Ritual" and made it a rule: **before every release, three sticks of incense must be burned.**
+The next day, I drafted this Incense Ritual and made it a rule: before every release, three sticks of incense must be burned.
 
-Since then, FluentGit's release incident rate has dropped by 87%.
-(Sample size n=1. But no one dares skip it again.)
+After that, that project’s release incident rate dropped by 87%.
+(Sample size n=1. But I never dared skip it again.)
+
+FluentGit has not shipped yet.
+But when I release it for the first time, these three sticks will be lit first.
+
 
 ---
 

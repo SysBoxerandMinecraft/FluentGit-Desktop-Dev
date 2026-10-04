@@ -9,19 +9,25 @@ Chinese version: [Ritual.md](./Ritual.md)
 
 ## 1. Origin
 
-Nobody prepared for the day FluentGit v0.9.0 shipped.
+FluentGit has not reached v1.0.0 yet.
+This Full Release Ritual comes from v0.9.0 of another project I once worked on.
+
+I did not prepare for the day that project’s v0.9.0 shipped.
 
 It was an ordinary Wednesday afternoon.
 CI was green. Tests passed. The code looked clean.
-So someone pressed `dotnet publish -c Release`.
+So I pressed dotnet publish -c Release.
 
 Seven minutes later, v0.9.0 was live.
 Nineteen minutes later, users started reporting issues.
-Thirty minutes later, someone discovered the database schema was not synchronized.
-Forty-five minutes later, someone noticed `CHANGELOG.md` still said v0.8.0.
+Thirty minutes later, I discovered the database schema was not synchronized.
+Forty-five minutes later, I noticed CHANGELOG.md still said v0.8.0.
 
-**That day's lesson became this document.**
+That day’s lesson became this document.
 
+FluentGit has not shipped a package yet.
+But a solo developer has no release manager.
+I am the release manager.
 ---
 
 ## 2. How the Ritual Relates to the Three Sticks
