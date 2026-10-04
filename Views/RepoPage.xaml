@@ -79,8 +79,8 @@
                                 Click="OnInitRepository" MinHeight="32" />
                         <Button x:Name="OpenRepoButton" Content="打开仓库"
                                 Click="OnOpenRepo" MinHeight="32" />
-                        <!-- <Button x:Name="CloneRepoButton" Content="克隆仓库"
-                                Click="OnCloneRepository" MinHeight="32" /> -->
+                        <Button x:Name="CloneRepoButton" Content="克隆仓库"
+                                Click="OnCloneRepository" MinHeight="32" />
                     </StackPanel>
                 </StackPanel>
 
