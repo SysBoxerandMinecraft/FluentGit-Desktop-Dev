@@ -25,11 +25,8 @@ public class TreeItemModel
 public sealed partial class AdminPage : Page
 {
     private const string TAG = "AdminPage";
-    private int _treeNodeCount = 0;
-    private const int MaxTreeNodes = 800;
     private static readonly ConcurrentDictionary<string, ImageSource> _iconCache = new();
 
-    // 当前生效的过滤列表（每次加载目录树前刷新一次）
     private string[] _activeSkipFolders = new[] { ".git" };
 
     private static readonly string[] SkipFolders =
@@ -57,7 +54,6 @@ public sealed partial class AdminPage : Page
     private DateTime _lastClickTime = DateTime.MinValue;
     private string? _lastClickedPath = null;
 
-    // 系统双击时间（毫秒）
     [DllImport("user32.dll")]
     private static extern uint GetDoubleClickTime();
 
@@ -124,16 +120,14 @@ public sealed partial class AdminPage : Page
         return null;
     }
 
-    // ========== 目录树 ==========
+    // ========== 目录树（懒加载） ==========
     private void LoadDirectoryTree(string rootPath)
     {
-        AppLogger.Info(TAG, $"开始加载目录树: {rootPath}");
+        AppLogger.Info(TAG, $"加载根节点: {rootPath}");
         var sw = Stopwatch.StartNew();
 
-        // 只在加载前读一次设置
         _activeSkipFolders = GetActiveSkipFolders();
 
-        _treeNodeCount = 0;
         DirectoryTreeView.RootNodes.Clear();
 
         try
@@ -155,12 +149,13 @@ public sealed partial class AdminPage : Page
                 IsExpanded = true
             };
 
-            AddChildren(rootNode, rootPath, 0, 4);
-
             DirectoryTreeView.RootNodes.Add(rootNode);
 
+            // 根节点第一层立刻加载（用户肯定想看）
+            PopulateChildren(rootNode, rootPath);
+
             sw.Stop();
-            AppLogger.OK(TAG, $"目录树完成: {_treeNodeCount} 节点, {sw.ElapsedMilliseconds}ms");
+            AppLogger.OK(TAG, $"根节点加载完成: {rootNode.Children.Count} 子项, {sw.ElapsedMilliseconds}ms");
         }
         catch (Exception ex)
         {
@@ -168,48 +163,42 @@ public sealed partial class AdminPage : Page
         }
     }
 
-    private void AddChildren(TreeViewNode parent, string path, int depth, int maxDepth)
+    /// <summary>
+    /// 加载 path 目录的直接子项到 parent 节点。只加载一层，不递归。
+    /// </summary>
+    private void PopulateChildren(TreeViewNode parent, string path)
     {
-        if (depth >= maxDepth || _treeNodeCount >= MaxTreeNodes) return;
-
-        var skipFolders = _activeSkipFolders;
-
         try
         {
+            // 先加子目录
             foreach (var dir in Directory.GetDirectories(path).OrderBy(d => d))
             {
-                if (_treeNodeCount >= MaxTreeNodes) return;
                 string name = Path.GetFileName(dir);
-                if (skipFolders.Contains(name, StringComparer.OrdinalIgnoreCase)) continue;
+                if (_activeSkipFolders.Contains(name, StringComparer.OrdinalIgnoreCase))
+                    continue;
 
-                bool isEmpty = true;
-                try
-                {
-                    isEmpty = !Directory.EnumerateFileSystemEntries(dir)
-                                        .Where(p => !skipFolders.Contains(Path.GetFileName(p), StringComparer.OrdinalIgnoreCase))
-                                        .Any();
-                }
-                catch { }
+                bool hasAnyChild = HasAnyVisibleChild(dir);
 
                 var model = new TreeItemModel
                 {
                     Name = name,
                     FullPath = dir,
                     IsFile = false,
-                    IconSource = GetIcon(isEmpty ? "Empty_Folder.png" : "Full_Folder.png")
+                    IconSource = GetIcon(hasAnyChild ? "Full_Folder.png" : "Empty_Folder.png")
                 };
 
-                var node = new TreeViewNode { Content = model };
-                parent.Children.Add(node);
-                _treeNodeCount++;
+                var node = new TreeViewNode
+                {
+                    Content = model,
+                    HasUnrealizedChildren = hasAnyChild  // 有内容才显示展开箭头
+                };
 
-                AddChildren(node, dir, depth + 1, maxDepth);
+                parent.Children.Add(node);
             }
 
+            // 再加文件
             foreach (var file in Directory.GetFiles(path).OrderBy(f => f))
             {
-                if (_treeNodeCount >= MaxTreeNodes) return;
-
                 var model = new TreeItemModel
                 {
                     Name = Path.GetFileName(file),
@@ -218,12 +207,51 @@ public sealed partial class AdminPage : Page
                     IconSource = GetIcon("File.png")
                 };
 
-                var node = new TreeViewNode { Content = model };
-                parent.Children.Add(node);
-                _treeNodeCount++;
+                parent.Children.Add(new TreeViewNode { Content = model });
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Warning(TAG, $"PopulateChildren 失败: {path} - {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 检查目录下是否有过滤后仍可见的条目（用于决定是否显示展开箭头）。
+    /// </summary>
+    private bool HasAnyVisibleChild(string dir)
+    {
+        try
+        {
+            foreach (var entry in Directory.EnumerateFileSystemEntries(dir))
+            {
+                string name = Path.GetFileName(entry);
+                if (!_activeSkipFolders.Contains(name, StringComparer.OrdinalIgnoreCase))
+                    return true;
             }
         }
         catch { }
+        return false;
+    }
+
+    // ========== 展开时懒加载下一层 ==========
+    private void DirectoryTreeView_Expanding(TreeView sender, TreeViewExpandingEventArgs args)
+    {
+        var node = args.Node;
+        if (node == null) return;
+        if (node.Content is not TreeItemModel model) return;
+        if (model.IsFile) return;
+
+        if (node.HasUnrealizedChildren)
+        {
+            var sw = Stopwatch.StartNew();
+            node.Children.Clear();
+            PopulateChildren(node, model.FullPath);
+            node.HasUnrealizedChildren = false;
+
+            sw.Stop();
+            AppLogger.Info(TAG, $"懒加载: {model.Name} → {node.Children.Count} 项, {sw.ElapsedMilliseconds}ms");
+        }
     }
 
     // ========== 双击打开 ==========
@@ -266,73 +294,73 @@ public sealed partial class AdminPage : Page
     }
 
     private MenuFlyout BuildContextMenu(TreeItemModel model)
+{
+    var menu = new MenuFlyout();
+
+    if (model.IsFile)
     {
-        var menu = new MenuFlyout();
-
-        if (model.IsFile)
+        var openItem = new MenuFlyoutItem
         {
-            var openItem = new MenuFlyoutItem
-            {
-                Text = "打开",
-                Icon = new SymbolIcon(Symbol.OpenFile)
-            };
-            openItem.Click += (_, _) => OpenFile(model.FullPath);
-            menu.Items.Add(openItem);
-        }
-        else
-        {
-            var terminalItem = new MenuFlyoutItem
-            {
-                Text = "在终端中打开",
-                Icon = new FontIcon { Glyph = "\uE756" }
-            };
-            terminalItem.Click += (_, _) => OpenTerminal(model.FullPath);
-            menu.Items.Add(terminalItem);
-
-            var explorerItem = new MenuFlyoutItem
-            {
-                Text = "在文件资源管理器中打开",
-                Icon = new SymbolIcon(Symbol.Folder)
-            };
-            explorerItem.Click += (_, _) => OpenExplorer(model.FullPath);
-            menu.Items.Add(explorerItem);
-        }
-
-        menu.Items.Add(new MenuFlyoutSeparator());
-
-        var copyPathItem = new MenuFlyoutItem
-        {
-            Text = "复制完整路径",
-            Icon = new SymbolIcon(Symbol.Copy)
+            Text = "打开",
+            Icon = new SymbolIcon(Symbol.OpenFile)
         };
-        copyPathItem.Click += (_, _) => CopyToClipboard(model.FullPath);
-        menu.Items.Add(copyPathItem);
-
-        var copyNameItem = new MenuFlyoutItem
-        {
-            Text = "复制名称",
-            Icon = new SymbolIcon(Symbol.Copy)
-        };
-        copyNameItem.Click += (_, _) => CopyToClipboard(model.Name);
-        menu.Items.Add(copyNameItem);
-
-        menu.Items.Add(new MenuFlyoutSeparator());
-
-        var refreshItem = new MenuFlyoutItem
-        {
-            Text = "刷新目录树",
-            Icon = new SymbolIcon(Symbol.Refresh)
-        };
-        refreshItem.Click += (_, _) =>
-        {
-            var repo = AppState.CurrentRepoPath;
-            if (!string.IsNullOrEmpty(repo))
-                LoadDirectoryTree(repo);
-        };
-        menu.Items.Add(refreshItem);
-
-        return menu;
+        openItem.Click += (_, _) => OpenFile(model.FullPath);
+        menu.Items.Add(openItem);
     }
+    else
+    {
+        var terminalItem = new MenuFlyoutItem
+        {
+            Text = "在终端中打开",
+            Icon = new FontIcon { Glyph = "\uE756" }
+        };
+        terminalItem.Click += (_, _) => OpenTerminal(model.FullPath);
+        menu.Items.Add(terminalItem);
+
+        var explorerItem = new MenuFlyoutItem
+        {
+            Text = "在文件资源管理器中打开",
+            Icon = new SymbolIcon(Symbol.Folder)
+        };
+        explorerItem.Click += (_, _) => OpenExplorer(model.FullPath);
+        menu.Items.Add(explorerItem);
+    }
+
+    menu.Items.Add(new MenuFlyoutSeparator());
+
+    var copyPathItem = new MenuFlyoutItem
+    {
+        Text = "复制完整路径",
+        Icon = new SymbolIcon(Symbol.Copy)
+    };
+    copyPathItem.Click += (_, _) => CopyToClipboard(model.FullPath);
+    menu.Items.Add(copyPathItem);
+
+    var copyNameItem = new MenuFlyoutItem
+    {
+        Text = "复制名称",
+        Icon = new SymbolIcon(Symbol.Copy)
+    };
+    copyNameItem.Click += (_, _) => CopyToClipboard(model.Name);
+    menu.Items.Add(copyNameItem);
+
+    menu.Items.Add(new MenuFlyoutSeparator());
+
+    var refreshItem = new MenuFlyoutItem
+    {
+        Text = "刷新目录树",
+        Icon = new SymbolIcon(Symbol.Refresh)
+    };
+    refreshItem.Click += (_, _) =>
+    {
+        var repo = AppState.CurrentRepoPath;
+        if (!string.IsNullOrEmpty(repo))
+            LoadDirectoryTree(repo);
+    };
+    menu.Items.Add(refreshItem);
+
+    return menu;
+}
 
     // ========== 右键菜单具体动作 ==========
     private void OpenFile(string path)

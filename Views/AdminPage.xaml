@@ -19,7 +19,10 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock Text="目录结构" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,15" />
+            <TextBlock Text="目录结构"
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,15" />
 
             <TextBlock x:Name="NoRepoText"
                        Grid.Row="1"
@@ -31,7 +34,8 @@
                       Visibility="Collapsed"
                       SelectionMode="Single"
                       ItemInvoked="DirectoryTreeView_ItemInvoked"
-                      RightTapped="DirectoryTreeView_RightTapped">
+                      RightTapped="DirectoryTreeView_RightTapped"
+                      Expanding="DirectoryTreeView_Expanding">
                 <TreeView.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="8" MinHeight="20">
