@@ -17,7 +17,6 @@
 | **Theme** | Follows system or manual toggle, persisted in settings (Mica on Windows 11, solid color fallback on Windows 10) |
 | **Notifications** | All operation results shown via InfoBar sliding notification, auto-dismiss |
 
-> **Clone feature** is implemented in `GitService` layer (with progress and cancellation), but the UI entry is temporarily commented out, reserved for future restoration.
 
 ---
 
