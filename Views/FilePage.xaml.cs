@@ -22,9 +22,9 @@ public class TreeItemModel
     public ImageSource? IconSource { get; set; }
 }
 
-public sealed partial class AdminPage : Page
+public sealed partial class FilePage : Page
 {
-    private const string TAG = "AdminPage";
+    private const string TAG = "FilePage";
     private static readonly ConcurrentDictionary<string, ImageSource> _iconCache = new();
 
     private string[] _activeSkipFolders = new[] { ".git" };
@@ -57,7 +57,7 @@ public sealed partial class AdminPage : Page
     [DllImport("user32.dll")]
     private static extern uint GetDoubleClickTime();
 
-    public AdminPage()
+    public FilePage()
     {
         InitializeComponent();
         this.Loaded += OnLoaded;
@@ -294,23 +294,23 @@ public sealed partial class AdminPage : Page
     }
 
     private MenuFlyout BuildContextMenu(TreeItemModel model)
-{
-    var menu = new MenuFlyout();
+    {
+        var menu = new MenuFlyout();
 
-    if (model.IsFile)
-    {
-        var openItem = new MenuFlyoutItem
+        if (model.IsFile)
         {
-            Text = "打开",
-            Icon = new SymbolIcon(Symbol.OpenFile)
-        };
-        openItem.Click += (_, _) => OpenFile(model.FullPath);
-        menu.Items.Add(openItem);
-    }
-    else
-    {
-        var terminalItem = new MenuFlyoutItem
+            var openItem = new MenuFlyoutItem
+            {
+                Text = "打开",
+                Icon = new SymbolIcon(Symbol.OpenFile)
+            };
+            openItem.Click += (_, _) => OpenFile(model.FullPath);
+            menu.Items.Add(openItem);
+        }
+        else
         {
+            var terminalItem = new MenuFlyoutItem
+            {
             Text = "在终端中打开",
             Icon = new FontIcon { Glyph = "\uE756" }
         };
@@ -324,43 +324,43 @@ public sealed partial class AdminPage : Page
         };
         explorerItem.Click += (_, _) => OpenExplorer(model.FullPath);
         menu.Items.Add(explorerItem);
-    }
+        }
 
-    menu.Items.Add(new MenuFlyoutSeparator());
+        menu.Items.Add(new MenuFlyoutSeparator());
 
-    var copyPathItem = new MenuFlyoutItem
-    {
-        Text = "复制完整路径",
-        Icon = new SymbolIcon(Symbol.Copy)
-    };
-    copyPathItem.Click += (_, _) => CopyToClipboard(model.FullPath);
-    menu.Items.Add(copyPathItem);
+        var copyPathItem = new MenuFlyoutItem
+        {
+            Text = "复制完整路径",
+            Icon = new SymbolIcon(Symbol.Copy)
+        };
+        copyPathItem.Click += (_, _) => CopyToClipboard(model.FullPath);
+        menu.Items.Add(copyPathItem);
 
-    var copyNameItem = new MenuFlyoutItem
-    {
+        var copyNameItem = new MenuFlyoutItem
+        {
         Text = "复制名称",
-        Icon = new SymbolIcon(Symbol.Copy)
-    };
-    copyNameItem.Click += (_, _) => CopyToClipboard(model.Name);
-    menu.Items.Add(copyNameItem);
+            Icon = new SymbolIcon(Symbol.Copy)
+        };
+        copyNameItem.Click += (_, _) => CopyToClipboard(model.Name);
+        menu.Items.Add(copyNameItem);
 
-    menu.Items.Add(new MenuFlyoutSeparator());
+        menu.Items.Add(new MenuFlyoutSeparator());
 
-    var refreshItem = new MenuFlyoutItem
-    {
-        Text = "刷新目录树",
-        Icon = new SymbolIcon(Symbol.Refresh)
-    };
-    refreshItem.Click += (_, _) =>
-    {
-        var repo = AppState.CurrentRepoPath;
-        if (!string.IsNullOrEmpty(repo))
-            LoadDirectoryTree(repo);
-    };
-    menu.Items.Add(refreshItem);
+        var refreshItem = new MenuFlyoutItem
+        {
+            Text = "刷新目录树",
+            Icon = new SymbolIcon(Symbol.Refresh)
+        };
+        refreshItem.Click += (_, _) =>
+        {
+            var repo = AppState.CurrentRepoPath;
+            if (!string.IsNullOrEmpty(repo))
+                LoadDirectoryTree(repo);
+        };
+        menu.Items.Add(refreshItem);
 
-    return menu;
-}
+        return menu;
+    }
 
     // ========== 右键菜单具体动作 ==========
     private void OpenFile(string path)

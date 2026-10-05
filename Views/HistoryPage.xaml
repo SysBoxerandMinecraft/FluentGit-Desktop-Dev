@@ -1,0 +1,110 @@
+<Page x:Class="FluentGit.Views.HistoryPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:services="using:FluentGit.Services"
+      mc:Ignorable="d"
+      NavigationCacheMode="Required">
+    <Grid Margin="30,90,30,30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 顶部标题栏 -->
+        <Grid Grid.Row="0" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Text="提交历史"
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="10"
+                        VerticalAlignment="Center">
+                <ProgressRing x:Name="LoadingRing"
+                              IsActive="False"
+                              Width="20" Height="20"
+                              Visibility="Collapsed" />
+                <Button x:Name="RefreshButton"
+                        Content="刷新"
+                        Click="OnRefreshClick" />
+            </StackPanel>
+        </Grid>
+
+        <!-- 未打开仓库提示 -->
+        <TextBlock x:Name="NoRepoText"
+                   Grid.Row="1"
+                   Text="尚未打开任何仓库，请先到「仓库」页面打开一个仓库。"
+                   Foreground="Gray"
+                   Visibility="Visible" />
+
+        <!-- 空仓库提示 -->
+        <TextBlock x:Name="EmptyText"
+                   Grid.Row="1"
+                   Text="该仓库还没有任何提交记录。"
+                   Foreground="Gray"
+                   Visibility="Collapsed" />
+
+        <!-- 提交列表 -->
+        <ListView x:Name="LogListView"
+                  Grid.Row="1"
+                  Visibility="Collapsed"
+                  SelectionMode="Single"
+                  IsItemClickEnabled="True"
+                  ItemClick="OnCommitItemClick">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="services:GitCommit">
+                    <Grid Padding="8,8" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 短 hash -->
+                        <Border Grid.Column="0"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="6,2"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{x:Bind ShortHash}"
+                                       FontFamily="Consolas"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </Border>
+
+                        <!-- commit message -->
+                        <TextBlock Grid.Column="1"
+                                   Text="{x:Bind Message}"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center" />
+
+                        <!-- 作者 + 日期 -->
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="12"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="{x:Bind Author}"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{x:Bind DateDisplay}"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       MinWidth="110" />
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

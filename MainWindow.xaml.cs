@@ -6,6 +6,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using System;
 using System.IO;
 using System.Reflection;
@@ -168,8 +169,11 @@ public sealed partial class MainWindow : Window
                 case "repo":
                     NavFrame.Navigate(typeof(RepoPage));
                     break;
-                case "admin":
-                    NavFrame.Navigate(typeof(AdminPage));
+                case "file":
+                    NavFrame.Navigate(typeof(FilePage));
+                    break;
+                case "history":
+                    NavFrame.Navigate(typeof(HistoryPage));
                     break;
                 case "settings":
                     NavFrame.Navigate(typeof(SettingsPage));
@@ -178,6 +182,43 @@ public sealed partial class MainWindow : Window
                     AppLogger.Warning(TAG, $"未知导航项: {item.Tag}");
                     break;
             }
+        }
+    }
+
+    // ========== 点击事件：设置齿轮旋转 ==========
+    private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        if (args.InvokedItemContainer is NavigationViewItem item &&
+            (item.Tag as string) == "settings")
+        {
+            RotateSettingsIcon();
+        }
+    }
+
+    private void RotateSettingsIcon()
+    {
+        try
+        {
+            var anim = new DoubleAnimation
+            {
+                From = 0,
+                To = 360,
+                Duration = new Duration(TimeSpan.FromMilliseconds(500)),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
+            };
+
+            Storyboard.SetTarget(anim, SettingsIconRotation);
+            Storyboard.SetTargetProperty(anim, "Angle");
+
+            var sb = new Storyboard();
+            sb.Children.Add(anim);
+            sb.Completed += (_, _) => SettingsIconRotation.Angle = 0;
+
+            sb.Begin();
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Warning(TAG, $"齿轮旋转动画失败: {ex.Message}");
         }
     }
 }
