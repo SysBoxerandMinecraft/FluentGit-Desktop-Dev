@@ -15,6 +15,12 @@ public sealed partial class HistoryPage : Page
     private const string TAG = "HistoryPage";
     private bool _isLoading = false;
 
+    // 对话框里用的字体：明确指定，避免触发系统字体解析
+    private static readonly FontFamily UiFont =
+        new FontFamily("Segoe UI Variable,Segoe UI");
+    private static readonly FontFamily MonoFont =
+        new FontFamily("Consolas,Cascadia Mono,Courier New");
+
     public HistoryPage()
     {
         InitializeComponent();
@@ -100,7 +106,7 @@ public sealed partial class HistoryPage : Page
         }
     }
 
-    // ========== 右键前先选中该项（保证 SelectedItem 是对的） ==========
+    // ========== 右键前先选中该项 ==========
     private void OnItemRightTapped(object sender, RightTappedRoutedEventArgs e)
     {
         if (sender is FrameworkElement fe && fe.DataContext is GitCommit commit)
@@ -185,6 +191,7 @@ public sealed partial class HistoryPage : Page
         {
             Text = "提交信息",
             FontSize = 12,
+            FontFamily = UiFont,
             Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
         });
 
@@ -192,7 +199,8 @@ public sealed partial class HistoryPage : Page
         {
             Text = commit.Message,
             TextWrapping = TextWrapping.Wrap,
-            IsTextSelectionEnabled = true
+            IsTextSelectionEnabled = true,
+            FontFamily = UiFont
         });
 
         var dialog = new ContentDialog
@@ -231,6 +239,7 @@ public sealed partial class HistoryPage : Page
             Text = label,
             Width = 60,
             FontSize = 12,
+            FontFamily = UiFont,
             Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
             VerticalAlignment = VerticalAlignment.Top
         });
@@ -240,7 +249,7 @@ public sealed partial class HistoryPage : Page
             Text = value,
             TextWrapping = TextWrapping.Wrap,
             IsTextSelectionEnabled = true,
-            FontFamily = isMonospace ? new FontFamily("Consolas") : null,
+            FontFamily = isMonospace ? MonoFont : UiFont,
             FontSize = 13
         });
 

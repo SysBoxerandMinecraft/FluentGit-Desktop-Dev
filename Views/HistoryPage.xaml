@@ -117,14 +117,14 @@
                                                 Click="OnCopyHashClick"
                                                 Tag="{x:Bind Hash}">
                                     <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE8C8;" />
+                                        <SymbolIcon Symbol="Copy" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutItem Text="复制短 Hash"
                                                 Click="OnCopyShortHashClick"
                                                 Tag="{x:Bind ShortHash}">
                                     <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE8C8;" />
+                                        <SymbolIcon Symbol="Copy" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator />
@@ -132,14 +132,14 @@
                                                 Click="OnCopyMessageClick"
                                                 Tag="{x:Bind Message}">
                                     <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE8C8;" />
+                                        <SymbolIcon Symbol="Copy" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator />
                                 <MenuFlyoutItem Text="查看详情"
                                                 Click="OnViewDetailClick">
                                     <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE946;" />
+                                        <SymbolIcon Symbol="View" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                             </MenuFlyout>

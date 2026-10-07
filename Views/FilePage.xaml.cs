@@ -151,7 +151,6 @@ public sealed partial class FilePage : Page
 
             DirectoryTreeView.RootNodes.Add(rootNode);
 
-            // 根节点第一层立刻加载（用户肯定想看）
             PopulateChildren(rootNode, rootPath);
 
             sw.Stop();
@@ -163,14 +162,10 @@ public sealed partial class FilePage : Page
         }
     }
 
-    /// <summary>
-    /// 加载 path 目录的直接子项到 parent 节点。只加载一层，不递归。
-    /// </summary>
     private void PopulateChildren(TreeViewNode parent, string path)
     {
         try
         {
-            // 先加子目录
             foreach (var dir in Directory.GetDirectories(path).OrderBy(d => d))
             {
                 string name = Path.GetFileName(dir);
@@ -190,13 +185,12 @@ public sealed partial class FilePage : Page
                 var node = new TreeViewNode
                 {
                     Content = model,
-                    HasUnrealizedChildren = hasAnyChild  // 有内容才显示展开箭头
+                    HasUnrealizedChildren = hasAnyChild
                 };
 
                 parent.Children.Add(node);
             }
 
-            // 再加文件
             foreach (var file in Directory.GetFiles(path).OrderBy(f => f))
             {
                 var model = new TreeItemModel
@@ -216,9 +210,6 @@ public sealed partial class FilePage : Page
         }
     }
 
-    /// <summary>
-    /// 检查目录下是否有过滤后仍可见的条目（用于决定是否显示展开箭头）。
-    /// </summary>
     private bool HasAnyVisibleChild(string dir)
     {
         try
@@ -311,19 +302,19 @@ public sealed partial class FilePage : Page
         {
             var terminalItem = new MenuFlyoutItem
             {
-            Text = "在终端中打开",
-            Icon = new FontIcon { Glyph = "\uE756" }
-        };
-        terminalItem.Click += (_, _) => OpenTerminal(model.FullPath);
-        menu.Items.Add(terminalItem);
+                Text = "在终端中打开",
+                Icon = new SymbolIcon(Symbol.Play)
+            };
+            terminalItem.Click += (_, _) => OpenTerminal(model.FullPath);
+            menu.Items.Add(terminalItem);
 
-        var explorerItem = new MenuFlyoutItem
-        {
-            Text = "在文件资源管理器中打开",
-            Icon = new SymbolIcon(Symbol.Folder)
-        };
-        explorerItem.Click += (_, _) => OpenExplorer(model.FullPath);
-        menu.Items.Add(explorerItem);
+            var explorerItem = new MenuFlyoutItem
+            {
+                Text = "在文件资源管理器中打开",
+                Icon = new SymbolIcon(Symbol.Folder)
+            };
+            explorerItem.Click += (_, _) => OpenExplorer(model.FullPath);
+            menu.Items.Add(explorerItem);
         }
 
         menu.Items.Add(new MenuFlyoutSeparator());
@@ -338,7 +329,7 @@ public sealed partial class FilePage : Page
 
         var copyNameItem = new MenuFlyoutItem
         {
-        Text = "复制名称",
+            Text = "复制名称",
             Icon = new SymbolIcon(Symbol.Copy)
         };
         copyNameItem.Click += (_, _) => CopyToClipboard(model.Name);

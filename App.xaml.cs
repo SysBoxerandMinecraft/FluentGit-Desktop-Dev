@@ -14,16 +14,13 @@ public partial class App : Application
     {
         InitializeComponent();
 
-        // UI 线程未处理异常
         UnhandledException += OnUnhandledException;
 
-        // 后台线程未处理异常（通常意味着进程即将终止，只能记录）
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             CrashLogger.Log("AppDomain", e.ExceptionObject as Exception);
         };
 
-        // Task 未观察异常（吞掉，避免进程被提升为致命异常）
         System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, e) =>
         {
             CrashLogger.Log("TaskScheduler", e.Exception);
@@ -33,11 +30,18 @@ public partial class App : Application
 
     private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
+        // 过滤 WinUI 3 已知问题：Popup 上下文里 SymbolThemeFontFamily 解析失败
+        if (e.Exception is ArgumentException argEx &&
+            argEx.Message.Contains("FontFamily", StringComparison.OrdinalIgnoreCase))
+        {
+            AppLogger.Warning("App", $"忽略已知的 FontFamily 异常: {e.Message}");
+            e.Handled = true;
+            return;
+        }
+
         CrashLogger.Log("UI", e.Exception);
         AppLogger.Error("App", $"未处理异常: {e.Message}");
 
-        // 对真正无法恢复的异常，让进程去死
-        // 其余（UI 事件处理器里的 async void 抛出等）标记为已处理，避免整个应用崩掉
         if (e.Exception is OutOfMemoryException or StackOverflowException)
         {
             e.Handled = false;
