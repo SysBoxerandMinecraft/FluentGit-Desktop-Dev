@@ -56,13 +56,57 @@ public sealed partial class MainWindow : Window
         // 主题：从设置读
         ApplyThemeFromSettings();
 
-        // 返回按钮可见性：Frame.CanGoBack 不是依赖属性，x:Bind 不生效，手动维护
-        NavFrame.Navigated += (_, _) =>
-        {
-            AppTitleBar.IsBackButtonVisible = NavFrame.CanGoBack;
-        };
+        // 返回按钮可见性 + 左侧导航选中项同步
+        NavFrame.Navigated += OnNavFrameNavigated;
 
         NavFrame.Navigate(typeof(RepoPage));
+    }
+
+    // ========== 导航事件：同步返回按钮 + 左侧选中项 ==========
+    private void OnNavFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs args)
+    {
+        AppTitleBar.IsBackButtonVisible = NavFrame.CanGoBack;
+
+        string? tag = args.SourcePageType switch
+        {
+            var t when t == typeof(RepoPage)     => "repo",
+            var t when t == typeof(FilePage)     => "file",
+            var t when t == typeof(HistoryPage)  => "history",
+            var t when t == typeof(ClonePage)    => "clone",
+            var t when t == typeof(SettingsPage) => "settings",
+            _ => null
+        };
+
+        if (tag != null)
+            SelectNavItem(tag);
+    }
+
+    // ========== 根据 tag 选中左侧导航项 ==========
+    private void SelectNavItem(string tag)
+    {
+        if (NavView.MenuItems != null)
+        {
+            foreach (var obj in NavView.MenuItems)
+            {
+                if (obj is NavigationViewItem item && (item.Tag as string) == tag)
+                {
+                    NavView.SelectedItem = item;
+                    return;
+                }
+            }
+        }
+
+        if (NavView.FooterMenuItems != null)
+        {
+            foreach (var obj in NavView.FooterMenuItems)
+            {
+                if (obj is NavigationViewItem item && (item.Tag as string) == tag)
+                {
+                    NavView.SelectedItem = item;
+                    return;
+                }
+            }
+        }
     }
 
     // ========== Mica / Acrylic / 回退 ==========
@@ -174,6 +218,9 @@ public sealed partial class MainWindow : Window
                     break;
                 case "history":
                     NavFrame.Navigate(typeof(HistoryPage));
+                    break;
+                case "clone":
+                    NavFrame.Navigate(typeof(ClonePage));
                     break;
                 case "settings":
                     NavFrame.Navigate(typeof(SettingsPage));

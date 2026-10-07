@@ -13,7 +13,6 @@ public sealed partial class RepoPage : Page
     private CancellationTokenSource? _infoBarCts;
     private bool _isInfoBarAnimating = false;
 
-    // 防重入标志（按钮视觉不禁用）
     private bool _isBusy = false;
 
     public RepoPage()
@@ -34,6 +33,28 @@ public sealed partial class RepoPage : Page
             RepoNameDisplay.Visibility = Visibility.Visible;
         }
         UpdateCloneUI();
+    }
+
+    // ========== 从克隆页返回时刷新 ==========
+    protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+
+        // 从 ClonePage 回来时，仓库可能刚被设置
+        var saved = AppState.CurrentRepoPath;
+        if (!string.IsNullOrEmpty(saved) && Directory.Exists(saved))
+        {
+            RepoActionsPanel.Visibility = Visibility.Collapsed;
+            RepoNameDisplay.Text = Path.GetFileName(saved);
+            RepoNameDisplay.Visibility = Visibility.Visible;
+        }
+        UpdateCloneUI();
+    }
+
+    // ========== 跳转到克隆页 ==========
+    private void OnNavigateToClone(object sender, RoutedEventArgs e)
+    {
+        Frame.Navigate(typeof(ClonePage));
     }
 
     // ========== Git 检测 ==========
