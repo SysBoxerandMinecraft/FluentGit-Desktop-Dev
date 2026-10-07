@@ -62,26 +62,32 @@
                   ItemClick="OnCommitItemClick">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="services:GitCommit">
-                    <Grid Padding="8,8" ColumnSpacing="12">
+                    <Grid Padding="8,8"
+                          ColumnSpacing="12"
+                          Background="Transparent"
+                          RightTapped="OnItemRightTapped">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- 短 hash -->
-                        <Border Grid.Column="0"
+                        <!-- 短 hash：可点击复制 -->
+                        <Button Grid.Column="0"
+                                Click="OnHashClick"
+                                Tag="{x:Bind Hash}"
+                                Padding="6,2"
                                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="4"
-                                Padding="6,2"
-                                VerticalAlignment="Center">
+                                VerticalAlignment="Center"
+                                ToolTipService.ToolTip="点击复制完整 Hash">
                             <TextBlock Text="{x:Bind ShortHash}"
                                        FontFamily="Consolas"
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </Border>
+                        </Button>
 
                         <!-- commit message -->
                         <TextBlock Grid.Column="1"
@@ -89,7 +95,7 @@
                                    TextTrimming="CharacterEllipsis"
                                    VerticalAlignment="Center" />
 
-                        <!-- 作者 + 日期 -->
+                        <!-- 作者 + 时间 -->
                         <StackPanel Grid.Column="2"
                                     Orientation="Horizontal"
                                     Spacing="12"
@@ -97,11 +103,47 @@
                             <TextBlock Text="{x:Bind Author}"
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBlock Text="{x:Bind DateDisplay}"
+                            <TextBlock Text="{x:Bind RelativeTime}"
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                       MinWidth="110" />
+                                       MinWidth="80"
+                                       ToolTipService.ToolTip="{x:Bind DateDisplay}" />
                         </StackPanel>
+
+                        <!-- 右键菜单 -->
+                        <Grid.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="复制完整 Hash"
+                                                Click="OnCopyHashClick"
+                                                Tag="{x:Bind Hash}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8C8;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="复制短 Hash"
+                                                Click="OnCopyShortHashClick"
+                                                Tag="{x:Bind ShortHash}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8C8;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Text="复制提交信息"
+                                                Click="OnCopyMessageClick"
+                                                Tag="{x:Bind Message}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8C8;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Text="查看详情"
+                                                Click="OnViewDetailClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE946;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Grid.ContextFlyout>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

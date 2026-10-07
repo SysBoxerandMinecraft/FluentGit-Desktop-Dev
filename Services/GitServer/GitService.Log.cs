@@ -13,6 +13,7 @@ public class GitCommit
     public string Date { get; set; } = "";           // ISO 8601 原始值
     public string Message { get; set; } = "";
 
+    /// <summary>绝对时间，形如 2026-10-07 12:34</summary>
     public string DateDisplay
     {
         get
@@ -20,6 +21,39 @@ public class GitCommit
             if (DateTimeOffset.TryParse(Date, out var d))
                 return d.LocalDateTime.ToString("yyyy-MM-dd HH:mm");
             return Date;
+        }
+    }
+
+    /// <summary>人性化相对时间，形如 3 分钟前 / 昨天 14:30 / 10-01 14:30</summary>
+    public string RelativeTime
+    {
+        get
+        {
+            if (!DateTimeOffset.TryParse(Date, out var dto)) return Date;
+
+            var local = dto.LocalDateTime;
+            var now = DateTime.Now;
+            var diff = now - local;
+
+            if (diff.TotalSeconds < 60) return "刚刚";
+            if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} 分钟前";
+
+            if (local.Date == now.Date)
+                return $"{(int)diff.TotalHours} 小时前";
+
+            if (local.Date == now.Date.AddDays(-1))
+                return $"昨天 {local:HH:mm}";
+
+            if (local.Date > now.Date.AddDays(-7))
+            {
+                string[] weekdays = { "周日", "周一", "周二", "周三", "周四", "周五", "周六" };
+                return $"{weekdays[(int)local.DayOfWeek]} {local:HH:mm}";
+            }
+
+            if (local.Year == now.Year)
+                return local.ToString("MM-dd HH:mm");
+
+            return local.ToString("yyyy-MM-dd");
         }
     }
 }
@@ -34,6 +68,8 @@ public static partial class GitService
 
         try
         {
+            // %x1f = Unit Separator，字段分隔
+            // %x1e = Record Separator，记录分隔
             var (code, output, error) = RunGit(
                 gitExePath,
                 new[]
