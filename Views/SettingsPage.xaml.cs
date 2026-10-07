@@ -41,8 +41,10 @@ public sealed partial class SettingsPage : Page
         // 过滤选项
         FilterArtifactsCheckBox.IsChecked = settings.FilterBuildArtifacts;
 
-        // 背景效果
+        // 背景效果（旧配置兼容：MicaAlt 已移除，回退到 Default）
         string currentBackdrop = settings.BackdropType ?? "Default";
+        if (currentBackdrop == "MicaAlt") currentBackdrop = "Default";
+
         foreach (var obj in BackdropComboBox.Items)
         {
             if (obj is ComboBoxItem item && (item.Tag as string) == currentBackdrop)
@@ -177,10 +179,6 @@ public sealed partial class SettingsPage : Page
             "Mica" => MicaController.IsSupported()
                 ? "当前系统支持 Mica。采样桌面壁纸色调，性能开销低。"
                 : "当前系统不支持 Mica，将回退为纯色背景。",
-
-            "MicaAlt" => MicaController.IsSupported()
-                ? "当前系统支持 Mica Alt。比标准 Mica 更浅。"
-                : "当前系统不支持 Mica Alt，将回退为纯色背景。",
 
             "Acrylic" => DesktopAcrylicController.IsSupported()
                 ? "当前系统支持亚克力。实时模糊窗口背后内容，性能开销较大。"

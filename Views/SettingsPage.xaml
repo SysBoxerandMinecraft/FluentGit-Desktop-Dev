@@ -186,8 +186,7 @@
                                       SelectionChanged="OnBackdropChanged">
                                 <ComboBoxItem Content="跟随系统" Tag="Default"/>
                                 <ComboBoxItem Content="Mica" Tag="Mica"/>
-                                <ComboBoxItem Content="Mica Alt（更浅）" Tag="MicaAlt"/>
-                                <ComboBoxItem Content="亚克力（毛玻璃）" Tag="Acrylic"/>
+                                <ComboBoxItem Content="亚克力(毛玻璃)" Tag="Acrylic"/>
                                 <ComboBoxItem Content="纯色" Tag="None"/>
                             </ComboBox>
 
