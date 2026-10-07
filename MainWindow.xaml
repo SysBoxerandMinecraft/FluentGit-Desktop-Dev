@@ -11,6 +11,44 @@
     mc:Ignorable="d">
 
     <Grid>
+        <Grid.Resources>
+            <!-- 全局 InfoBar：滑入 -->
+            <Storyboard x:Name="GlobalInfoBarSlideIn">
+                <DoubleAnimation Storyboard.TargetName="GlobalInfoBarTransform"
+                                 Storyboard.TargetProperty="Y"
+                                 From="-80" To="0" Duration="0:0:0.3">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="GlobalInfoBarContainer"
+                                 Storyboard.TargetProperty="Opacity"
+                                 From="0" To="1" Duration="0:0:0.3">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
+
+            <!-- 全局 InfoBar：滑出 -->
+            <Storyboard x:Name="GlobalInfoBarSlideOut">
+                <DoubleAnimation Storyboard.TargetName="GlobalInfoBarTransform"
+                                 Storyboard.TargetProperty="Y"
+                                 From="0" To="-80" Duration="0:0:0.2">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseIn"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="GlobalInfoBarContainer"
+                                 Storyboard.TargetProperty="Opacity"
+                                 From="1" To="0" Duration="0:0:0.2">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseIn"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+            </Storyboard>
+        </Grid.Resources>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="*" />
@@ -75,5 +113,27 @@
                 <Frame x:Name="NavFrame" />
             </NavigationView.Content>
         </NavigationView>
+
+        <!-- 全局 InfoBar 浮层（盖在所有内容之上） -->
+        <Border x:Name="GlobalInfoBarContainer"
+                Grid.RowSpan="2"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Center"
+                Margin="0,60,0,0"
+                MinWidth="400"
+                MaxWidth="600"
+                Opacity="0"
+                Visibility="Collapsed"
+                IsHitTestVisible="False">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="GlobalInfoBarTransform" Y="-80" />
+            </Border.RenderTransform>
+            <InfoBar x:Name="GlobalInfoBar"
+                     IsOpen="True"
+                     IsClosable="False"
+                     Severity="Informational"
+                     Title=""
+                     Message="" />
+        </Border>
     </Grid>
 </Window>

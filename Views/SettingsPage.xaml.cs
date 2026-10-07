@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using FluentGit.Services;
 using FluentGit.Services.Search;
@@ -16,12 +15,9 @@ namespace FluentGit.Views;
 public sealed partial class SettingsPage : Page
 {
     private const string TAG = "SettingsPage";
-    private CancellationTokenSource? _infoBarCts;
-    private const int InfoBarDisplayMilliseconds = 3000;
 
     private bool _isUpdating = false;
 
-    // 设置项索引（用于搜索）
     private readonly List<SearchEntry> _settings = new();
 
     public SettingsPage()
@@ -38,10 +34,8 @@ public sealed partial class SettingsPage : Page
 
         _isUpdating = true;
 
-        // 过滤选项
         FilterArtifactsCheckBox.IsChecked = settings.FilterBuildArtifacts;
 
-        // 背景效果（旧配置兼容：MicaAlt 已移除，回退到 Default）
         string currentBackdrop = settings.BackdropType ?? "Default";
         if (currentBackdrop == "MicaAlt") currentBackdrop = "Default";
 
@@ -139,6 +133,7 @@ public sealed partial class SettingsPage : Page
         settings.FilterBuildArtifacts = true;
         SettingsService.Save(settings);
         AppLogger.OK(TAG, "过滤编译产物：已开启");
+        Toast.Success("已开启过滤编译产物", "设置已更新");
     }
 
     private void OnFilterArtifactsUnchecked(object sender, RoutedEventArgs e)
@@ -148,6 +143,7 @@ public sealed partial class SettingsPage : Page
         settings.FilterBuildArtifacts = false;
         SettingsService.Save(settings);
         AppLogger.OK(TAG, "过滤编译产物：已关闭");
+        Toast.Info("已关闭过滤编译产物", "设置已更新");
     }
 
     // ========== 背景效果 ==========
@@ -161,11 +157,21 @@ public sealed partial class SettingsPage : Page
         settings.BackdropType = tag;
         SettingsService.Save(settings);
 
-        // 立即生效，不用重启
         App.MainWindow?.ApplyBackdrop(tag);
 
         UpdateBackdropHint(tag);
         AppLogger.OK(TAG, $"背景效果切换为: {tag}");
+
+        // 全局 InfoBar 提示
+        string displayName = tag switch
+        {
+            "Default" => "跟随系统",
+            "Mica"    => "Mica",
+            "Acrylic" => "亚克力",
+            "None"    => "纯色",
+            _         => tag
+        };
+        Toast.Success($"窗口背景已切换为「{displayName}」", "外观已更新");
     }
 
     private void UpdateBackdropHint(string tag)
@@ -213,7 +219,7 @@ public sealed partial class SettingsPage : Page
                 UpdateSelectedPathDisplay("");
                 GitVersionDisplay.Visibility = Visibility.Collapsed;
                 AppLogger.Warning(TAG, "未找到 Git");
-                ShowInfoBar("警告", "未找到 Git，请先安装 Git for Windows", InfoBarSeverity.Warning);
+                Toast.Warning("未找到 Git，请先安装 Git for Windows");
                 return;
             }
 
@@ -222,9 +228,7 @@ public sealed partial class SettingsPage : Page
                 UpdateSelectedPathDisplay(gitPath);
                 await UpdateGitVersionAsync(gitPath);
                 AppLogger.Error(TAG, $"签名验证失败: {gitPath}");
-                ShowInfoBar("错误",
-                    "找到的 Git 未通过签名验证，可能不是官方版本。",
-                    InfoBarSeverity.Error);
+                Toast.Error("找到的 Git 未通过签名验证，可能不是官方版本");
                 return;
             }
 
@@ -234,12 +238,12 @@ public sealed partial class SettingsPage : Page
             UpdateSelectedPathDisplay(gitPath);
             await UpdateGitVersionAsync(gitPath);
             AppLogger.OK(TAG, $"自动找到并保存 Git: {gitPath}");
-            ShowInfoBar("成功", $"已找到 Git 并保存: {gitPath}", InfoBarSeverity.Success);
+            Toast.Success($"已找到 Git：{gitPath}");
         }
         catch (Exception ex)
         {
             AppLogger.Error(TAG, $"查找异常: {ex.Message}");
-            ShowInfoBar("错误", $"查找异常: {ex.Message}", InfoBarSeverity.Error);
+            Toast.Error($"查找异常: {ex.Message}");
         }
         finally
         {
@@ -289,7 +293,6 @@ public sealed partial class SettingsPage : Page
 
             if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
             {
-                // git --version 输出形如: "git version 2.43.0.windows.1"
                 string version = output.Trim();
                 const string prefix = "git version ";
                 if (version.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
@@ -308,47 +311,6 @@ public sealed partial class SettingsPage : Page
         {
             AppLogger.Error(TAG, $"获取 Git 版本失败: {ex.Message}");
             GitVersionDisplay.Visibility = Visibility.Collapsed;
-        }
-    }
-
-    // ========== InfoBar（从上方滑入，向上滑出） ==========
-    private async void ShowInfoBar(string title, string message, InfoBarSeverity severity)
-    {
-        _infoBarCts?.Cancel();
-        var newCts = new CancellationTokenSource();
-        _infoBarCts = newCts;
-        var token = newCts.Token;
-
-        SlideInStoryboard.Stop();
-        SlideOutStoryboard.Stop();
-        InfoBarTransform.Y = -30;
-        InfoBarContainer.Opacity = 0;
-        InfoBarContainer.Visibility = Visibility.Visible;
-
-        StatusInfoBar.Title = title;
-        StatusInfoBar.Message = message;
-        StatusInfoBar.Severity = severity;
-
-        SlideInStoryboard.Begin();
-
-        try
-        {
-            await Task.Delay(InfoBarDisplayMilliseconds, token);
-
-            SlideOutStoryboard.Begin();
-            await Task.Delay(200);
-
-            InfoBarContainer.Visibility = Visibility.Collapsed;
-            InfoBarTransform.Y = -30;
-            InfoBarContainer.Opacity = 0;
-        }
-        catch (TaskCanceledException)
-        {
-            InfoBarContainer.Visibility = Visibility.Collapsed;
-            InfoBarTransform.Y = -30;
-            InfoBarContainer.Opacity = 0;
-            SlideInStoryboard.Stop();
-            SlideOutStoryboard.Stop();
         }
     }
 }

@@ -79,13 +79,15 @@ public static partial class GitService
         }
     }
 
-    // ========== 克隆仓库（带进度 + 可取消） ==========
+    // ========== 克隆仓库（带进度 + 可取消 + 支持浅克隆/指定分支） ==========
     public static bool CloneRepositoryWithProgress(
         string gitExePath,
         string remoteUrl,
         string targetDirectory,
         Action<int, string>? onProgress,
-        CancellationToken token = default)
+        CancellationToken token = default,
+        int? depth = null,
+        string? branch = null)
     {
         if (!File.Exists(gitExePath))
             throw new FileNotFoundException("git.exe 未找到", gitExePath);
@@ -99,7 +101,7 @@ public static partial class GitService
         _cloneSemaphore.Wait(token);
         try
         {
-            AppLogger.Info(TAG, $"开始 git clone (带进度): {remoteUrl} → {targetDirectory}");
+            AppLogger.Info(TAG, $"开始 git clone: {remoteUrl} → {targetDirectory} (depth={depth?.ToString() ?? "full"}, branch={branch ?? "default"})");
 
             var process = new System.Diagnostics.Process();
             var psi = new System.Diagnostics.ProcessStartInfo(gitExePath)
@@ -111,8 +113,22 @@ public static partial class GitService
                 StandardOutputEncoding = Encoding.UTF8,
                 StandardErrorEncoding = Encoding.UTF8
             };
+
             psi.ArgumentList.Add("clone");
             psi.ArgumentList.Add("--progress");
+
+            if (depth.HasValue && depth.Value > 0)
+            {
+                psi.ArgumentList.Add("--depth");
+                psi.ArgumentList.Add(depth.Value.ToString());
+            }
+
+            if (!string.IsNullOrEmpty(branch))
+            {
+                psi.ArgumentList.Add("--branch");
+                psi.ArgumentList.Add(branch);
+            }
+
             psi.ArgumentList.Add(remoteUrl);
             psi.ArgumentList.Add(targetDirectory);
             process.StartInfo = psi;

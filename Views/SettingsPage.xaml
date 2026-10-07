@@ -4,47 +4,6 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
-    <Page.Resources>
-        <!-- 滑入：从上方滑下来 + 淡入 -->
-        <Storyboard x:Name="SlideInStoryboard">
-            <DoubleAnimation Storyboard.TargetName="InfoBarTransform"
-                             Storyboard.TargetProperty="Y"
-                             From="-30" To="0"
-                             Duration="0:0:0.3">
-                <DoubleAnimation.EasingFunction>
-                    <CubicEase EasingMode="EaseOut"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="InfoBarContainer"
-                             Storyboard.TargetProperty="Opacity"
-                             From="0" To="1"
-                             Duration="0:0:0.3">
-                <DoubleAnimation.EasingFunction>
-                    <CubicEase EasingMode="EaseOut"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-
-        <!-- 滑出：向上滑回去 + 淡出 -->
-        <Storyboard x:Name="SlideOutStoryboard">
-            <DoubleAnimation Storyboard.TargetName="InfoBarTransform"
-                             Storyboard.TargetProperty="Y"
-                             From="0" To="-30"
-                             Duration="0:0:0.2">
-                <DoubleAnimation.EasingFunction>
-                    <CubicEase EasingMode="EaseIn"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetName="InfoBarContainer"
-                             Storyboard.TargetProperty="Opacity"
-                             From="1" To="0"
-                             Duration="0:0:0.2">
-                <DoubleAnimation.EasingFunction>
-                    <CubicEase EasingMode="EaseIn"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -52,7 +11,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 顶部：设置 + InfoBar + 搜索框 -->
+        <!-- 顶部：设置 + 搜索框 -->
         <Grid Grid.Row="0" Margin="30,24,30,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -65,25 +24,6 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        VerticalAlignment="Center"/>
-
-            <Border x:Name="InfoBarContainer"
-                    Grid.Column="1"
-                    Margin="20,0,20,0"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Left"
-                    Opacity="0"
-                    Visibility="Collapsed">
-                <Border.RenderTransform>
-                    <TranslateTransform x:Name="InfoBarTransform" Y="-30"/>
-                </Border.RenderTransform>
-                <InfoBar x:Name="StatusInfoBar"
-                         IsOpen="True"
-                         IsClosable="False"
-                         Severity="Success"
-                         Title=""
-                         Message=""
-                         MinWidth="300"/>
-            </Border>
 
             <AutoSuggestBox x:Name="SearchBox"
                             Grid.Column="2"

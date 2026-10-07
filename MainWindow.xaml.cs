@@ -10,12 +10,18 @@ using Microsoft.UI.Xaml.Media.Animation;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace FluentGit;
 
 public sealed partial class MainWindow : Window
 {
     private const string TAG = "MainWindow";
+
+    // 全局 InfoBar 的取消令牌，用于连续提示时打断上一个
+    private CancellationTokenSource? _globalInfoBarCts;
+    private bool _isGlobalInfoBarAnimating = false;
 
     public MainWindow()
     {
@@ -53,16 +59,65 @@ public sealed partial class MainWindow : Window
         string iconPath = Path.Combine(appDir, "Assets", "AppIcon.ico");
         AppWindow.SetIcon(iconPath);
 
-        // 主题：从设置读
         ApplyThemeFromSettings();
 
-        // 返回按钮可见性 + 左侧导航选中项同步
         NavFrame.Navigated += OnNavFrameNavigated;
 
         NavFrame.Navigate(typeof(RepoPage));
     }
 
-    // ========== 导航事件：同步返回按钮 + 左侧选中项 ==========
+    // ============================================================
+    //  全局 InfoBar 接口
+    // ============================================================
+    public async void ShowInfoBar(string title, string message, InfoBarSeverity severity)
+    {
+        // 打断上一个
+        if (_isGlobalInfoBarAnimating)
+        {
+            _globalInfoBarCts?.Cancel();
+            await Task.Delay(50);
+        }
+
+        _isGlobalInfoBarAnimating = true;
+        _globalInfoBarCts = new CancellationTokenSource();
+        var token = _globalInfoBarCts.Token;
+
+        GlobalInfoBarSlideIn.Stop();
+        GlobalInfoBarSlideOut.Stop();
+        GlobalInfoBarTransform.Y = -80;
+        GlobalInfoBarContainer.Opacity = 0;
+        GlobalInfoBarContainer.Visibility = Visibility.Visible;
+
+        GlobalInfoBar.Title = title;
+        GlobalInfoBar.Message = message;
+        GlobalInfoBar.Severity = severity;
+
+        GlobalInfoBarSlideIn.Begin();
+
+        try
+        {
+            await Task.Delay(3000, token);
+            GlobalInfoBarSlideOut.Begin();
+            await Task.Delay(200);
+            GlobalInfoBarContainer.Visibility = Visibility.Collapsed;
+        }
+        catch (TaskCanceledException)
+        {
+            GlobalInfoBarContainer.Visibility = Visibility.Collapsed;
+            GlobalInfoBarTransform.Y = -80;
+            GlobalInfoBarContainer.Opacity = 0;
+            GlobalInfoBarSlideIn.Stop();
+            GlobalInfoBarSlideOut.Stop();
+        }
+        finally
+        {
+            _isGlobalInfoBarAnimating = false;
+        }
+    }
+
+    // ============================================================
+    //  导航事件
+    // ============================================================
     private void OnNavFrameNavigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs args)
     {
         AppTitleBar.IsBackButtonVisible = NavFrame.CanGoBack;
@@ -81,7 +136,6 @@ public sealed partial class MainWindow : Window
             SelectNavItem(tag);
     }
 
-    // ========== 根据 tag 选中左侧导航项 ==========
     private void SelectNavItem(string tag)
     {
         if (NavView.MenuItems != null)
@@ -109,16 +163,15 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    // ========== Mica / Acrylic / 回退 ==========
+    // ============================================================
+    //  Backdrop
+    // ============================================================
     private void InitializeBackdrop()
     {
         var settings = SettingsService.Load();
         ApplyBackdrop(settings.BackdropType ?? "Default");
     }
 
-    /// <summary>
-    /// 应用窗口背景效果。可在运行时调用，动态切换。
-    /// </summary>
     public void ApplyBackdrop(string backdropType)
     {
         try
@@ -167,7 +220,9 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    // ========== 主题 ==========
+    // ============================================================
+    //  主题
+    // ============================================================
     private void ApplyThemeFromSettings()
     {
         try
@@ -191,7 +246,9 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    // ========== 标题栏事件 ==========
+    // ============================================================
+    //  标题栏事件
+    // ============================================================
     private void TitleBar_PaneToggleRequested(TitleBar sender, object args)
     {
         NavView.IsPaneOpen = !NavView.IsPaneOpen;
@@ -203,7 +260,9 @@ public sealed partial class MainWindow : Window
             NavFrame.GoBack();
     }
 
-    // ========== 导航 ==========
+    // ============================================================
+    //  导航
+    // ============================================================
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (args.SelectedItem is NavigationViewItem item)
@@ -232,7 +291,9 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    // ========== 点击事件：设置齿轮旋转 ==========
+    // ============================================================
+    //  设置齿轮旋转
+    // ============================================================
     private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
         if (args.InvokedItemContainer is NavigationViewItem item &&
