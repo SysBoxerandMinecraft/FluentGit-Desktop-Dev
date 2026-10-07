@@ -9,19 +9,17 @@
         <StackPanel HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Spacing="20"
-                    MinWidth="700"
-                    MaxWidth="1000">
+                    MinWidth="{StaticResource FormContentMinWidth}"
+                    MaxWidth="{StaticResource FormContentMaxWidth}">
 
             <TextBlock Text="克隆仓库"
-                       FontSize="24"
-                       FontWeight="SemiBold" />
+                       Style="{StaticResource PageTitleStyle}" />
 
             <!-- 远程地址 -->
             <TextBox x:Name="UrlBox"
                      Header="远程地址"
                      PlaceholderText="https://github.com/user/repo.git"
-                     MinHeight="38"
-                     FontSize="14" />
+                     Style="{StaticResource FormTextBoxStyle}" />
 
             <!-- 目标目录 -->
             <Grid ColumnSpacing="10">
@@ -34,16 +32,14 @@
                          Grid.Column="0"
                          Header="目标目录"
                          PlaceholderText="选择或输入一个空目录"
-                         MinHeight="38"
-                         FontSize="14" />
+                         Style="{StaticResource FormTextBoxStyle}" />
 
                 <Button x:Name="BrowseButton"
                         Grid.Column="1"
                         Content="浏览..."
                         Click="OnBrowseClick"
                         VerticalAlignment="Bottom"
-                        MinWidth="100"
-                        MinHeight="38" />
+                        Style="{StaticResource FormButtonStyle}" />
             </Grid>
 
             <!-- 进度条 -->
@@ -55,8 +51,7 @@
 
             <!-- 状态文字 -->
             <TextBlock x:Name="StatusText"
-                       Foreground="Gray"
-                       TextWrapping="Wrap"
+                       Style="{StaticResource CaptionTextStyle}"
                        Visibility="Collapsed" />
 
             <!-- 按钮 -->
@@ -64,16 +59,13 @@
                 <Button x:Name="StartButton"
                         Content="开始克隆"
                         Click="OnStartClick"
-                        Style="{StaticResource AccentButtonStyle}"
-                        MinWidth="130"
-                        MinHeight="38" />
+                        Style="{StaticResource PrimaryFormButtonStyle}" />
 
                 <Button x:Name="CancelButton"
                         Content="取消"
                         Click="OnCancelClick"
                         IsEnabled="False"
-                        MinWidth="100"
-                        MinHeight="38" />
+                        Style="{StaticResource FormButtonStyle}" />
             </StackPanel>
 
         </StackPanel>
